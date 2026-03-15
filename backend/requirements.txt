@@ -1,11 +1,5 @@
 flask
 flask-cors
-pypdf2
-python-docx
-markdown
-reportlab
 gunicorn
-pillow
-openpyxl
-rembg
-yt-dlp
+docx2pdf
+pdf2docx
