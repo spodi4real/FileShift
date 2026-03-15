@@ -5,3 +5,6 @@ python-docx
 markdown
 reportlab
 gunicorn
+pillow
+openpyxl
+rembg

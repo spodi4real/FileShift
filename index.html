@@ -9,23 +9,181 @@
   <body>
     <div class="container">
       <h1>⚡ FileShift</h1>
-      <p>Convert images, documents, and audio files — free & fast</p>
+      <p>Convert, edit, and transform your files — free & fast</p>
 
-      <div class="upload-box" onclick="document.getElementById('fileInput').click()">
-        <input type="file" id="fileInput" hidden />
-        <p id="uploadLabel">📁 Click here to upload a file</p>
+      <!-- TOOLS GRID -->
+      <div class="tools-grid">
+
+        <div class="tool-card" onclick="showTool('converter')">
+          🔄 File Converter
+        </div>
+        <div class="tool-card" onclick="showTool('merge')">
+          📎 Merge PDFs
+        </div>
+        <div class="tool-card" onclick="showTool('split')">
+          ✂️ Split PDF
+        </div>
+        <div class="tool-card" onclick="showTool('protect')">
+          🔒 Protect PDF
+        </div>
+        <div class="tool-card" onclick="showTool('unlock')">
+          🔓 Unlock PDF
+        </div>
+        <div class="tool-card" onclick="showTool('pagenumbers')">
+          🔢 Add Page Numbers
+        </div>
+        <div class="tool-card" onclick="showTool('imgpdf')">
+          🖼️ Image to PDF
+        </div>
+        <div class="tool-card" onclick="showTool('wordpdf')">
+          📝 Word to PDF
+        </div>
+        <div class="tool-card" onclick="showTool('kml')">
+          🗺️ CSV/XLSX to KML
+        </div>
+        <div class="tool-card" onclick="showTool('removebg')">
+          🪄 Remove Background
+        </div>
+        <div class="tool-card" onclick="showTool('crop')">
+          ✂️ Crop Image
+        </div>
+
       </div>
 
-      <div class="options">
-        <label>Convert to:</label>
-        <select id="formatSelect">
-          <option value="">-- Select format --</option>
-        </select>
-        <button id="convertBtn">Convert File</button>
+      <!-- FILE CONVERTER -->
+      <div class="tool-section" id="tool-converter">
+        <h2>🔄 File Converter</h2>
+        <div class="upload-box" onclick="document.getElementById('fileInput').click()">
+          <input type="file" id="fileInput" hidden />
+          <p id="uploadLabel">📁 Click here to upload a file</p>
+        </div>
+        <div class="options">
+          <label>Convert to:</label>
+          <select id="formatSelect">
+            <option value="">-- Select format --</option>
+          </select>
+          <button onclick="handleConvert()">Convert File</button>
+        </div>
+      </div>
+
+      <!-- MERGE PDF -->
+      <div class="tool-section" id="tool-merge">
+        <h2>📎 Merge PDFs</h2>
+        <div class="upload-box" onclick="document.getElementById('mergeInput').click()">
+          <input type="file" id="mergeInput" multiple accept=".pdf" hidden />
+          <p id="mergeLabel">📁 Click to upload multiple PDFs</p>
+        </div>
+        <button onclick="mergePDFs()">Merge PDFs</button>
+      </div>
+
+      <!-- SPLIT PDF -->
+      <div class="tool-section" id="tool-split">
+        <h2>✂️ Split PDF</h2>
+        <div class="upload-box" onclick="document.getElementById('splitInput').click()">
+          <input type="file" id="splitInput" accept=".pdf" hidden />
+          <p id="splitLabel">📁 Click to upload a PDF</p>
+        </div>
+        <button onclick="splitPDF()">Split PDF</button>
+      </div>
+
+      <!-- PROTECT PDF -->
+      <div class="tool-section" id="tool-protect">
+        <h2>🔒 Protect PDF</h2>
+        <div class="upload-box" onclick="document.getElementById('protectInput').click()">
+          <input type="file" id="protectInput" accept=".pdf" hidden />
+          <p id="protectLabel">📁 Click to upload a PDF</p>
+        </div>
+        <input type="password" id="protectPassword" placeholder="Enter password" class="text-input" />
+        <button onclick="protectPDF()">Protect PDF</button>
+      </div>
+
+      <!-- UNLOCK PDF -->
+      <div class="tool-section" id="tool-unlock">
+        <h2>🔓 Unlock PDF</h2>
+        <div class="upload-box" onclick="document.getElementById('unlockInput').click()">
+          <input type="file" id="unlockInput" accept=".pdf" hidden />
+          <p id="unlockLabel">📁 Click to upload a PDF</p>
+        </div>
+        <input type="password" id="unlockPassword" placeholder="Enter password" class="text-input" />
+        <button onclick="unlockPDF()">Unlock PDF</button>
+      </div>
+
+      <!-- PAGE NUMBERS -->
+      <div class="tool-section" id="tool-pagenumbers">
+        <h2>🔢 Add Page Numbers</h2>
+        <div class="upload-box" onclick="document.getElementById('pageNumInput').click()">
+          <input type="file" id="pageNumInput" accept=".pdf" hidden />
+          <p id="pageNumLabel">📁 Click to upload a PDF</p>
+        </div>
+        <button onclick="addPageNumbers()">Add Page Numbers</button>
+      </div>
+
+      <!-- IMAGE TO PDF -->
+      <div class="tool-section" id="tool-imgpdf">
+        <h2>🖼️ Image to PDF</h2>
+        <div class="upload-box" onclick="document.getElementById('imgPdfInput').click()">
+          <input type="file" id="imgPdfInput" accept=".jpg,.jpeg,.png" hidden />
+          <p id="imgPdfLabel">📁 Click to upload an image</p>
+        </div>
+        <button onclick="imageToPDF()">Convert to PDF</button>
+      </div>
+
+      <!-- WORD TO PDF -->
+      <div class="tool-section" id="tool-wordpdf">
+        <h2>📝 Word to PDF</h2>
+        <div class="upload-box" onclick="document.getElementById('wordPdfInput').click()">
+          <input type="file" id="wordPdfInput" accept=".docx" hidden />
+          <p id="wordPdfLabel">📁 Click to upload a Word file</p>
+        </div>
+        <button onclick="wordToPDF()">Convert to PDF</button>
+      </div>
+
+      <!-- CSV/XLSX TO KML -->
+      <div class="tool-section" id="tool-kml">
+        <h2>🗺️ CSV/XLSX to KML</h2>
+        <div class="upload-box" onclick="document.getElementById('kmlInput').click()">
+          <input type="file" id="kmlInput" accept=".csv,.xlsx" hidden />
+          <p id="kmlLabel">📁 Click to upload CSV or XLSX</p>
+        </div>
+        <div class="kml-fields">
+          <input type="text" id="kmlLat" placeholder="Latitude column name" class="text-input" />
+          <input type="text" id="kmlLng" placeholder="Longitude column name" class="text-input" />
+          <input type="text" id="kmlName" placeholder="Name column name" class="text-input" />
+          <input type="text" id="kmlDesc" placeholder="Description column (optional)" class="text-input" />
+        </div>
+        <button onclick="convertToKML()">Convert to KML</button>
+      </div>
+
+      <!-- REMOVE BACKGROUND -->
+      <div class="tool-section" id="tool-removebg">
+        <h2>🪄 Remove Background</h2>
+        <div class="upload-box" onclick="document.getElementById('removeBgInput').click()">
+          <input type="file" id="removeBgInput" accept=".jpg,.jpeg,.png" hidden />
+          <p id="removeBgLabel">📁 Click to upload an image</p>
+        </div>
+        <button onclick="removeBackground()">Remove Background</button>
+      </div>
+
+      <!-- CROP IMAGE -->
+      <div class="tool-section" id="tool-crop">
+        <h2>✂️ Crop Image</h2>
+        <div class="upload-box" onclick="document.getElementById('cropInput').click()">
+          <input type="file" id="cropInput" accept=".jpg,.jpeg,.png" hidden />
+          <p id="cropLabel">📁 Click to upload an image</p>
+        </div>
+        <canvas id="cropCanvas" style="display:none; max-width:100%; margin-top:16px; border-radius:12px;"></canvas>
+        <div id="cropControls" style="display:none;" class="options">
+          <label>X:</label><input type="number" id="cropX" value="0" class="text-input small" />
+          <label>Y:</label><input type="number" id="cropY" value="0" class="text-input small" />
+          <label>W:</label><input type="number" id="cropW" value="100" class="text-input small" />
+          <label>H:</label><input type="number" id="cropH" value="100" class="text-input small" />
+          <button onclick="cropImage()">Crop & Download</button>
+        </div>
       </div>
 
       <div id="status"></div>
     </div>
+
     <script src="https://unpkg.com/@ffmpeg/ffmpeg@0.11.6/dist/ffmpeg.min.js"></script>
     <script src="script.js"></script>
   </body>
