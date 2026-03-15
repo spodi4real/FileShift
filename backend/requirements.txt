@@ -8,3 +8,4 @@ gunicorn
 pillow
 openpyxl
 rembg
+yt-dlp

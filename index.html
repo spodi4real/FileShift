@@ -5,166 +5,358 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
     <title>FileShift</title>
     <link rel="stylesheet" href="style.css" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
   </head>
   <body>
-    <div class="container">
-      <h1>⚡ FileShift</h1>
-      <p>Convert, edit, and transform your files — free & fast</p>
 
-      <!-- TOOLS GRID -->
-      <div class="tools-grid">
-        <div class="tool-card" onclick="showTool('converter', this)">🔄 File Converter</div>
-        <div class="tool-card" onclick="showTool('merge', this)">📎 Merge PDFs</div>
-        <div class="tool-card" onclick="showTool('split', this)">✂️ Split PDF</div>
-        <div class="tool-card" onclick="showTool('protect', this)">🔒 Protect PDF</div>
-        <div class="tool-card" onclick="showTool('unlock', this)">🔓 Unlock PDF</div>
-        <div class="tool-card" onclick="showTool('pagenumbers', this)">🔢 Add Page Numbers</div>
-        <div class="tool-card" onclick="showTool('imgpdf', this)">🖼️ Image to PDF</div>
-        <div class="tool-card" onclick="showTool('wordpdf', this)">📝 Word to PDF</div>
-        <div class="tool-card" onclick="showTool('kml', this)">🗺️ CSV/XLSX to KML</div>
-        <div class="tool-card" onclick="showTool('removebg', this)">🪄 Remove Background</div>
-        <div class="tool-card" onclick="showTool('crop', this)">✂️ Crop Image</div>
+    <nav class="navbar">
+      <div class="logo">⚡ FileShift</div>
+      <div class="nav-links">
+        <a href="#" onclick="showSection('converter')">Converter</a>
+        <a href="#" onclick="showSection('pdf')">PDF Tools</a>
+        <a href="#" onclick="showSection('media')">Media</a>
+        <a href="#" onclick="showSection('image')">Image Tools</a>
+        <a href="#" onclick="showSection('kml')">KML</a>
+      </div>
+    </nav>
+
+    <main class="main">
+
+      <!-- HERO -->
+      <div class="hero" id="hero">
+        <h1>Your Files.<br/>Your Way.</h1>
+        <p>Convert, edit, and download — all in one place. Free & fast.</p>
+        <div class="hero-cards">
+          <div class="hero-card" onclick="showSection('converter')">
+            <i class="fa-solid fa-rotate"></i>
+            <span>File Converter</span>
+          </div>
+          <div class="hero-card" onclick="showSection('pdf')">
+            <i class="fa-solid fa-file-pdf"></i>
+            <span>PDF Tools</span>
+          </div>
+          <div class="hero-card" onclick="showSection('media')">
+            <i class="fa-solid fa-download"></i>
+            <span>Media Downloader</span>
+          </div>
+          <div class="hero-card" onclick="showSection('image')">
+            <i class="fa-solid fa-image"></i>
+            <span>Image Tools</span>
+          </div>
+          <div class="hero-card" onclick="showSection('kml')">
+            <i class="fa-solid fa-map-location-dot"></i>
+            <span>CSV to KML</span>
+          </div>
+        </div>
       </div>
 
       <!-- FILE CONVERTER -->
-      <div class="tool-section" id="tool-converter">
-        <h2>🔄 File Converter</h2>
-        <div class="upload-box" onclick="document.getElementById('fileInput').click()">
-          <input type="file" id="fileInput" hidden />
-          <p id="uploadLabel">📁 Click here to upload a file</p>
+      <section class="section" id="section-converter">
+        <div class="section-header">
+          <button class="back-btn" onclick="showHero()">
+            <i class="fa-solid fa-arrow-left"></i> Back
+          </button>
+          <h2><i class="fa-solid fa-rotate"></i> File Converter</h2>
+          <p>Convert images, audio, and documents instantly</p>
         </div>
-        <div class="options">
+        <div class="drop-zone" id="converterDrop">
+          <input type="file" id="converterInput" hidden />
+          <i class="fa-solid fa-cloud-arrow-up drop-icon"></i>
+          <p class="drop-text">Drag & drop your file here or <span class="browse">browse</span></p>
+          <p class="drop-sub" id="converterFileName">Supports images, audio, and documents</p>
+        </div>
+        <div class="format-row" id="converterFormatRow" style="display:none;">
           <label>Convert to:</label>
-          <select id="formatSelect">
-            <option value="">-- Select format --</option>
-          </select>
-          <button onclick="handleConvert()">Convert File</button>
+          <select id="formatSelect" class="text-input"></select>
+          <button class="btn-primary" onclick="handleConvert()">
+            <i class="fa-solid fa-bolt"></i> Convert
+          </button>
         </div>
-      </div>
+      </section>
 
-      <!-- MERGE PDF -->
-      <div class="tool-section" id="tool-merge">
-        <h2>📎 Merge PDFs</h2>
-        <div class="upload-box" onclick="document.getElementById('mergeInput').click()">
-          <input type="file" id="mergeInput" multiple accept=".pdf" hidden />
-          <p id="mergeLabel">📁 Click to upload multiple PDFs</p>
+      <!-- PDF TOOLS -->
+      <section class="section" id="section-pdf">
+        <div class="section-header">
+          <button class="back-btn" onclick="showHero()">
+            <i class="fa-solid fa-arrow-left"></i> Back
+          </button>
+          <h2><i class="fa-solid fa-file-pdf"></i> PDF Tools</h2>
+          <p>Everything you need to work with PDFs</p>
         </div>
-        <button onclick="mergePDFs()">Merge PDFs</button>
-      </div>
-
-      <!-- SPLIT PDF -->
-      <div class="tool-section" id="tool-split">
-        <h2>✂️ Split PDF</h2>
-        <div class="upload-box" onclick="document.getElementById('splitInput').click()">
-          <input type="file" id="splitInput" accept=".pdf" hidden />
-          <p id="splitLabel">📁 Click to upload a PDF</p>
+        <div class="tool-tabs">
+          <button class="tab active" onclick="showTab('merge')">Merge</button>
+          <button class="tab" onclick="showTab('split')">Split</button>
+          <button class="tab" onclick="showTab('protect')">Protect</button>
+          <button class="tab" onclick="showTab('unlock')">Unlock</button>
+          <button class="tab" onclick="showTab('pagenums')">Page Numbers</button>
+          <button class="tab" onclick="showTab('wordpdf')">Word to PDF</button>
+          <button class="tab" onclick="showTab('imgpdf')">Image to PDF</button>
         </div>
-        <button onclick="splitPDF()">Split PDF</button>
-      </div>
 
-      <!-- PROTECT PDF -->
-      <div class="tool-section" id="tool-protect">
-        <h2>🔒 Protect PDF</h2>
-        <div class="upload-box" onclick="document.getElementById('protectInput').click()">
-          <input type="file" id="protectInput" accept=".pdf" hidden />
-          <p id="protectLabel">📁 Click to upload a PDF</p>
+        <!-- MERGE -->
+        <div class="tab-content active" id="tab-merge">
+          <div class="drop-zone" id="mergeDrop">
+            <input type="file" id="mergeInput" multiple accept=".pdf" hidden />
+            <i class="fa-solid fa-cloud-arrow-up drop-icon"></i>
+            <p class="drop-text">Drag & drop PDFs or <span class="browse">browse</span></p>
+            <p class="drop-sub">Upload multiple PDFs to merge</p>
+          </div>
+          <div id="mergeFileList" class="file-list"></div>
+          <button class="btn-primary" onclick="mergePDFs()">
+            <i class="fa-solid fa-compress"></i> Merge PDFs
+          </button>
         </div>
-        <input type="password" id="protectPassword" placeholder="Enter password" class="text-input" />
-        <button onclick="protectPDF()">Protect PDF</button>
-      </div>
 
-      <!-- UNLOCK PDF -->
-      <div class="tool-section" id="tool-unlock">
-        <h2>🔓 Unlock PDF</h2>
-        <div class="upload-box" onclick="document.getElementById('unlockInput').click()">
-          <input type="file" id="unlockInput" accept=".pdf" hidden />
-          <p id="unlockLabel">📁 Click to upload a PDF</p>
+        <!-- SPLIT -->
+        <div class="tab-content" id="tab-split">
+          <div class="drop-zone" id="splitDrop">
+            <input type="file" id="splitInput" accept=".pdf" hidden />
+            <i class="fa-solid fa-cloud-arrow-up drop-icon"></i>
+            <p class="drop-text">Drag & drop a PDF or <span class="browse">browse</span></p>
+            <p class="drop-sub" id="splitFileName">Each page will be saved as a separate PDF</p>
+          </div>
+          <button class="btn-primary" onclick="splitPDF()">
+            <i class="fa-solid fa-scissors"></i> Split PDF
+          </button>
         </div>
-        <input type="password" id="unlockPassword" placeholder="Enter password" class="text-input" />
-        <button onclick="unlockPDF()">Unlock PDF</button>
-      </div>
 
-      <!-- PAGE NUMBERS -->
-      <div class="tool-section" id="tool-pagenumbers">
-        <h2>🔢 Add Page Numbers</h2>
-        <div class="upload-box" onclick="document.getElementById('pageNumInput').click()">
-          <input type="file" id="pageNumInput" accept=".pdf" hidden />
-          <p id="pageNumLabel">📁 Click to upload a PDF</p>
+        <!-- PROTECT -->
+        <div class="tab-content" id="tab-protect">
+          <div class="drop-zone" id="protectDrop">
+            <input type="file" id="protectInput" accept=".pdf" hidden />
+            <i class="fa-solid fa-cloud-arrow-up drop-icon"></i>
+            <p class="drop-text">Drag & drop a PDF or <span class="browse">browse</span></p>
+            <p class="drop-sub" id="protectFileName">Upload the PDF you want to protect</p>
+          </div>
+          <div class="input-row">
+            <input type="password" id="protectPassword" class="text-input" placeholder="Enter password" />
+            <button class="btn-primary" onclick="protectPDF()">
+              <i class="fa-solid fa-lock"></i> Protect PDF
+            </button>
+          </div>
         </div>
-        <button onclick="addPageNumbers()">Add Page Numbers</button>
-      </div>
 
-      <!-- IMAGE TO PDF -->
-      <div class="tool-section" id="tool-imgpdf">
-        <h2>🖼️ Image to PDF</h2>
-        <div class="upload-box" onclick="document.getElementById('imgPdfInput').click()">
-          <input type="file" id="imgPdfInput" accept=".jpg,.jpeg,.png" hidden />
-          <p id="imgPdfLabel">📁 Click to upload an image</p>
+        <!-- UNLOCK -->
+        <div class="tab-content" id="tab-unlock">
+          <div class="drop-zone" id="unlockDrop">
+            <input type="file" id="unlockInput" accept=".pdf" hidden />
+            <i class="fa-solid fa-cloud-arrow-up drop-icon"></i>
+            <p class="drop-text">Drag & drop a PDF or <span class="browse">browse</span></p>
+            <p class="drop-sub" id="unlockFileName">Upload the protected PDF</p>
+          </div>
+          <div class="input-row">
+            <input type="password" id="unlockPassword" class="text-input" placeholder="Enter password" />
+            <button class="btn-primary" onclick="unlockPDF()">
+              <i class="fa-solid fa-lock-open"></i> Unlock PDF
+            </button>
+          </div>
         </div>
-        <button onclick="imageToPDF()">Convert to PDF</button>
-      </div>
 
-      <!-- WORD TO PDF -->
-      <div class="tool-section" id="tool-wordpdf">
-        <h2>📝 Word to PDF</h2>
-        <div class="upload-box" onclick="document.getElementById('wordPdfInput').click()">
-          <input type="file" id="wordPdfInput" accept=".docx" hidden />
-          <p id="wordPdfLabel">📁 Click to upload a Word file</p>
+        <!-- PAGE NUMBERS -->
+        <div class="tab-content" id="tab-pagenums">
+          <div class="drop-zone" id="pageNumDrop">
+            <input type="file" id="pageNumInput" accept=".pdf" hidden />
+            <i class="fa-solid fa-cloud-arrow-up drop-icon"></i>
+            <p class="drop-text">Drag & drop a PDF or <span class="browse">browse</span></p>
+            <p class="drop-sub" id="pageNumFileName">Page numbers will be added at the bottom</p>
+          </div>
+          <button class="btn-primary" onclick="addPageNumbers()">
+            <i class="fa-solid fa-list-ol"></i> Add Page Numbers
+          </button>
         </div>
-        <button onclick="wordToPDF()">Convert to PDF</button>
-      </div>
 
-      <!-- CSV/XLSX TO KML -->
-      <div class="tool-section" id="tool-kml">
-        <h2>🗺️ CSV/XLSX to KML</h2>
-        <div class="upload-box" onclick="document.getElementById('kmlInput').click()">
+        <!-- WORD TO PDF -->
+        <div class="tab-content" id="tab-wordpdf">
+          <div class="drop-zone" id="wordDrop">
+            <input type="file" id="wordInput" accept=".docx" hidden />
+            <i class="fa-solid fa-cloud-arrow-up drop-icon"></i>
+            <p class="drop-text">Drag & drop a Word file or <span class="browse">browse</span></p>
+            <p class="drop-sub" id="wordFileName">Supports .docx files</p>
+          </div>
+          <button class="btn-primary" onclick="wordToPDF()">
+            <i class="fa-solid fa-file-pdf"></i> Convert to PDF
+          </button>
+        </div>
+
+        <!-- IMAGE TO PDF -->
+        <div class="tab-content" id="tab-imgpdf">
+          <div class="drop-zone" id="imgPdfDrop">
+            <input type="file" id="imgPdfInput" accept=".jpg,.jpeg,.png" hidden />
+            <i class="fa-solid fa-cloud-arrow-up drop-icon"></i>
+            <p class="drop-text">Drag & drop an image or <span class="browse">browse</span></p>
+            <p class="drop-sub" id="imgPdfFileName">Supports JPG and PNG</p>
+          </div>
+          <button class="btn-primary" onclick="imageToPDF()">
+            <i class="fa-solid fa-file-pdf"></i> Convert to PDF
+          </button>
+        </div>
+
+      </section>
+
+      <!-- MEDIA DOWNLOADER -->
+      <section class="section" id="section-media">
+        <div class="section-header">
+          <button class="back-btn" onclick="showHero()">
+            <i class="fa-solid fa-arrow-left"></i> Back
+          </button>
+          <h2><i class="fa-solid fa-download"></i> Media Downloader</h2>
+          <p>Download videos and audio from YouTube, TikTok, Instagram and Facebook</p>
+        </div>
+        <div class="media-platforms">
+          <span><i class="fa-brands fa-youtube"></i> YouTube</span>
+          <span><i class="fa-brands fa-tiktok"></i> TikTok</span>
+          <span><i class="fa-brands fa-instagram"></i> Instagram</span>
+          <span><i class="fa-brands fa-facebook"></i> Facebook</span>
+        </div>
+        <div class="url-row">
+          <input type="text" id="mediaUrl" class="text-input" placeholder="Paste video URL here..." />
+          <button class="btn-primary" onclick="fetchMediaInfo()">
+            <i class="fa-solid fa-magnifying-glass"></i> Fetch
+          </button>
+        </div>
+        <div id="mediaResult" style="display:none;">
+          <div class="media-preview">
+            <img id="mediaThumbnail" src="" alt="thumbnail" />
+            <div class="media-info">
+              <p id="mediaTitle"></p>
+              <div class="media-options">
+                <label>Format:</label>
+                <select id="mediaFormat" class="text-input">
+                  <option value="mp4-best">Video - Best Quality</option>
+                  <option value="mp4-720">Video - 720p</option>
+                  <option value="mp4-480">Video - 480p</option>
+                  <option value="mp3">Audio Only - MP3</option>
+                </select>
+                <button class="btn-primary" onclick="downloadMedia()">
+                  <i class="fa-solid fa-download"></i> Download
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- IMAGE TOOLS -->
+      <section class="section" id="section-image">
+        <div class="section-header">
+          <button class="back-btn" onclick="showHero()">
+            <i class="fa-solid fa-arrow-left"></i> Back
+          </button>
+          <h2><i class="fa-solid fa-image"></i> Image Tools</h2>
+          <p>Remove backgrounds and crop images with precision</p>
+        </div>
+        <div class="tool-tabs">
+          <button class="tab active" onclick="showImageTab('removebg')">
+            Remove Background
+          </button>
+          <button class="tab" onclick="showImageTab('crop')">
+            Crop Image
+          </button>
+        </div>
+
+        <!-- REMOVE BG -->
+        <div class="tab-content active" id="tab-removebg">
+          <div class="drop-zone" id="removeBgDrop">
+            <input type="file" id="removeBgInput" accept=".jpg,.jpeg,.png" hidden />
+            <i class="fa-solid fa-cloud-arrow-up drop-icon"></i>
+            <p class="drop-text">Drag & drop an image or <span class="browse">browse</span></p>
+            <p class="drop-sub" id="removeBgFileName">Supports JPG and PNG</p>
+          </div>
+          <button class="btn-primary" id="removeBgBtn" onclick="removeBackground()">
+            <i class="fa-solid fa-wand-magic-sparkles"></i> Remove Background
+          </button>
+          <div id="removeBgPreview" style="display:none; margin-top:24px;">
+            <div class="preview-split">
+              <div>
+                <p class="preview-label">Original</p>
+                <img id="removeBgOriginal" src="" alt="original" />
+              </div>
+              <div>
+                <p class="preview-label">Result</p>
+                <img id="removeBgResult" src="" alt="result"
+                  style="background: repeating-conic-gradient(#444 0% 25%, #222 0% 50%) 0 0 / 20px 20px;" />
+              </div>
+            </div>
+            <button class="btn-primary" onclick="downloadRemovedBg()">
+              <i class="fa-solid fa-download"></i> Download PNG
+            </button>
+          </div>
+        </div>
+
+        <!-- CROP -->
+        <div class="tab-content" id="tab-crop">
+          <div class="drop-zone" id="cropDrop">
+            <input type="file" id="cropInput" accept=".jpg,.jpeg,.png" hidden />
+            <i class="fa-solid fa-cloud-arrow-up drop-icon"></i>
+            <p class="drop-text">Drag & drop an image or <span class="browse">browse</span></p>
+            <p class="drop-sub" id="cropFileName">Drag the corners to crop precisely</p>
+          </div>
+          <div id="cropArea" style="display:none; margin-top:24px;">
+            <div class="crop-container">
+              <canvas id="cropCanvas"></canvas>
+              <div id="cropOverlay">
+                <div class="crop-handle" id="handle-tl"></div>
+                <div class="crop-handle" id="handle-tr"></div>
+                <div class="crop-handle" id="handle-bl"></div>
+                <div class="crop-handle" id="handle-br"></div>
+              </div>
+            </div>
+            <div class="crop-info">
+              <span id="cropDimensions">W: 0  H: 0</span>
+            </div>
+            <button class="btn-primary" onclick="cropImage()">
+              <i class="fa-solid fa-crop-simple"></i> Crop & Download
+            </button>
+          </div>
+        </div>
+
+      </section>
+
+      <!-- KML -->
+      <section class="section" id="section-kml">
+        <div class="section-header">
+          <button class="back-btn" onclick="showHero()">
+            <i class="fa-solid fa-arrow-left"></i> Back
+          </button>
+          <h2><i class="fa-solid fa-map-location-dot"></i> CSV / XLSX to KML</h2>
+          <p>Convert spreadsheet data into Google Earth KML files</p>
+        </div>
+        <div class="drop-zone" id="kmlDrop">
           <input type="file" id="kmlInput" accept=".csv,.xlsx" hidden />
-          <p id="kmlLabel">📁 Click to upload CSV or XLSX</p>
+          <i class="fa-solid fa-cloud-arrow-up drop-icon"></i>
+          <p class="drop-text">Drag & drop your CSV or XLSX or <span class="browse">browse</span></p>
+          <p class="drop-sub" id="kmlFileName">Columns will be auto-detected</p>
         </div>
-        <div class="kml-fields" id="kmlFields" style="display:none;">
-          <label>Latitude column:</label>
-          <select id="kmlLat" class="text-input"></select>
-          <label>Longitude column:</label>
-          <select id="kmlLng" class="text-input"></select>
-          <label>Name column:</label>
-          <select id="kmlName" class="text-input"></select>
-          <label>Description column (optional):</label>
-          <select id="kmlDesc" class="text-input">
-            <option value="">-- None --</option>
-          </select>
-          <button onclick="convertToKML()">Convert to KML</button>
+        <div id="kmlFields" style="display:none;">
+          <div class="kml-grid">
+            <div class="kml-field">
+              <label>Latitude column</label>
+              <select id="kmlLat" class="text-input"></select>
+            </div>
+            <div class="kml-field">
+              <label>Longitude column</label>
+              <select id="kmlLng" class="text-input"></select>
+            </div>
+            <div class="kml-field">
+              <label>Name column</label>
+              <select id="kmlName" class="text-input"></select>
+            </div>
+            <div class="kml-field">
+              <label>Description (optional)</label>
+              <select id="kmlDesc" class="text-input">
+                <option value="">-- None --</option>
+              </select>
+            </div>
+          </div>
+          <button class="btn-primary" onclick="convertToKML()">
+            <i class="fa-solid fa-map"></i> Convert to KML
+          </button>
         </div>
-      </div>
+      </section>
 
-      <!-- REMOVE BACKGROUND -->
-      <div class="tool-section" id="tool-removebg">
-        <h2>🪄 Remove Background</h2>
-        <div class="upload-box" onclick="document.getElementById('removeBgInput').click()">
-          <input type="file" id="removeBgInput" accept=".jpg,.jpeg,.png" hidden />
-          <p id="removeBgLabel">📁 Click to upload an image</p>
-        </div>
-        <button onclick="removeBackground()">Remove Background</button>
-      </div>
+    </main>
 
-      <!-- CROP IMAGE -->
-      <div class="tool-section" id="tool-crop">
-        <h2>✂️ Crop Image</h2>
-        <div class="upload-box" onclick="document.getElementById('cropInput').click()">
-          <input type="file" id="cropInput" accept=".jpg,.jpeg,.png" hidden />
-          <p id="cropLabel">📁 Click to upload an image</p>
-        </div>
-        <canvas id="cropCanvas" style="display:none; max-width:100%; margin-top:16px; border-radius:12px;"></canvas>
-        <div id="cropControls" style="display:none;" class="options">
-          <label>X:</label><input type="number" id="cropX" value="0" class="text-input small" />
-          <label>Y:</label><input type="number" id="cropY" value="0" class="text-input small" />
-          <label>W:</label><input type="number" id="cropW" value="100" class="text-input small" />
-          <label>H:</label><input type="number" id="cropH" value="100" class="text-input small" />
-          <button onclick="cropImage()">Crop & Download</button>
-        </div>
-      </div>
-
-      <div id="status"></div>
-    </div>
+    <div id="statusToast" class="toast"></div>
 
     <script src="https://unpkg.com/@ffmpeg/ffmpeg@0.11.6/dist/ffmpeg.min.js"></script>
     <script src="script.js"></script>

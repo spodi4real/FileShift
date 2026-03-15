@@ -1,48 +1,32 @@
 from flask import Flask, request, send_file, jsonify, make_response
 import io
 import os
+import tempfile
 
 app = Flask(__name__)
 
-def add_cors(response):
+def cors(response):
     response.headers['Access-Control-Allow-Origin'] = '*'
     response.headers['Access-Control-Allow-Methods'] = 'GET, POST, OPTIONS'
-    response.headers['Access-Control-Allow-Headers'] = 'Content-Type, Authorization'
+    response.headers['Access-Control-Allow-Headers'] = 'Content-Type'
     return response
 
 @app.before_request
 def handle_options():
     if request.method == 'OPTIONS':
-        response = make_response()
-        response.headers['Access-Control-Allow-Origin'] = '*'
-        response.headers['Access-Control-Allow-Methods'] = 'GET, POST, OPTIONS'
-        response.headers['Access-Control-Allow-Headers'] = 'Content-Type, Authorization'
-        return response
+        r = make_response()
+        r.headers['Access-Control-Allow-Origin'] = '*'
+        r.headers['Access-Control-Allow-Methods'] = 'GET, POST, OPTIONS'
+        r.headers['Access-Control-Allow-Headers'] = 'Content-Type'
+        return r
 
 @app.after_request
 def after_request(response):
     response.headers['Access-Control-Allow-Origin'] = '*'
     response.headers['Access-Control-Allow-Methods'] = 'GET, POST, OPTIONS'
-    response.headers['Access-Control-Allow-Headers'] = 'Content-Type, Authorization'
+    response.headers['Access-Control-Allow-Headers'] = 'Content-Type'
     return response
 
-@app.route('/csv-columns', methods=['POST', 'OPTIONS'])
-def get_columns():
-    import csv
-    file = request.files['file']
-    filename = file.filename.lower()
-    if filename.endswith('.csv'):
-        content = file.read().decode('utf-8').splitlines()
-        reader = csv.DictReader(content)
-        columns = list(reader.fieldnames)
-    elif filename.endswith('.xlsx'):
-        import openpyxl
-        wb = openpyxl.load_workbook(file)
-        ws = wb.active
-        columns = [cell.value for cell in ws[1]]
-    else:
-        return add_cors(make_response(jsonify({'error': 'Unsupported file'}), 400))
-    return add_cors(make_response(jsonify({'columns': list(columns)})))
 
 @app.route('/convert', methods=['POST', 'OPTIONS'])
 def convert():
@@ -53,17 +37,20 @@ def convert():
     if filename.endswith('.txt') and target_format == 'html':
         content = file.read().decode('utf-8')
         result = '<html><body><pre>' + content + '</pre></body></html>'
-        return add_cors(make_response(send_file(io.BytesIO(result.encode()), mimetype='text/html', as_attachment=True, download_name='converted.html')))
+        return cors(make_response(send_file(io.BytesIO(result.encode()),
+            mimetype='text/html', as_attachment=True, download_name='converted.html')))
 
     elif filename.endswith('.html') and target_format == 'txt':
         content = file.read().decode('utf-8')
-        return add_cors(make_response(send_file(io.BytesIO(content.encode()), mimetype='text/plain', as_attachment=True, download_name='converted.txt')))
+        return cors(make_response(send_file(io.BytesIO(content.encode()),
+            mimetype='text/plain', as_attachment=True, download_name='converted.txt')))
 
     elif filename.endswith('.md') and target_format == 'html':
         import markdown
         content = file.read().decode('utf-8')
         result = markdown.markdown(content)
-        return add_cors(make_response(send_file(io.BytesIO(result.encode()), mimetype='text/html', as_attachment=True, download_name='converted.html')))
+        return cors(make_response(send_file(io.BytesIO(result.encode()),
+            mimetype='text/html', as_attachment=True, download_name='converted.html')))
 
     elif filename.endswith('.txt') and target_format == 'pdf':
         from reportlab.pdfgen import canvas as pdf_canvas
@@ -79,28 +66,21 @@ def convert():
                 y = 750
         c.save()
         buffer.seek(0)
-        return add_cors(make_response(send_file(buffer, mimetype='application/pdf', as_attachment=True, download_name='converted.pdf')))
+        return cors(make_response(send_file(buffer,
+            mimetype='application/pdf', as_attachment=True, download_name='converted.pdf')))
 
-    elif filename.endswith('.docx') and target_format == 'pdf':
-        from docx2pdf import convert
-        import tempfile
-        tmp_in = tempfile.NamedTemporaryFile(delete=False, suffix='.docx')
-        tmp_out = tempfile.NamedTemporaryFile(delete=False, suffix='.pdf')
-        file.save(tmp_in.name)
-        convert(tmp_in.name, tmp_out.name)
-        return add_cors(make_response(send_file(tmp_out.name, mimetype='application/pdf', as_attachment=True, download_name='converted.pdf')))
-
-    elif (filename.endswith('.jpg') or filename.endswith('.jpeg') or filename.endswith('.png')) and target_format == 'pdf':
+    elif (filename.endswith('.jpg') or filename.endswith('.jpeg') or
+          filename.endswith('.png')) and target_format == 'pdf':
         from PIL import Image
-        img = Image.open(file)
-        img = img.convert('RGB')
+        img = Image.open(file).convert('RGB')
         buffer = io.BytesIO()
         img.save(buffer, format='PDF')
         buffer.seek(0)
-        return add_cors(make_response(send_file(buffer, mimetype='application/pdf', as_attachment=True, download_name='converted.pdf')))
+        return cors(make_response(send_file(buffer,
+            mimetype='application/pdf', as_attachment=True, download_name='converted.pdf')))
 
     else:
-        return add_cors(make_response(jsonify({'error': 'Conversion not supported yet'}), 400))
+        return cors(make_response(jsonify({'error': 'Conversion not supported yet'}), 400))
 
 
 @app.route('/pdf/merge', methods=['POST', 'OPTIONS'])
@@ -114,7 +94,8 @@ def merge_pdf():
     merger.write(buffer)
     merger.close()
     buffer.seek(0)
-    return add_cors(make_response(send_file(buffer, mimetype='application/pdf', as_attachment=True, download_name='merged.pdf')))
+    return cors(make_response(send_file(buffer,
+        mimetype='application/pdf', as_attachment=True, download_name='merged.pdf')))
 
 
 @app.route('/pdf/split', methods=['POST', 'OPTIONS'])
@@ -131,9 +112,10 @@ def split_pdf():
             page_buffer = io.BytesIO()
             writer.write(page_buffer)
             page_buffer.seek(0)
-            zf.writestr(f'page_{i+1}.pdf', page_buffer.read())
+            zf.writestr('page_{}.pdf'.format(i + 1), page_buffer.read())
     zip_buffer.seek(0)
-    return add_cors(make_response(send_file(zip_buffer, mimetype='application/zip', as_attachment=True, download_name='split_pages.zip')))
+    return cors(make_response(send_file(zip_buffer,
+        mimetype='application/zip', as_attachment=True, download_name='split_pages.zip')))
 
 
 @app.route('/pdf/protect', methods=['POST', 'OPTIONS'])
@@ -149,7 +131,8 @@ def protect_pdf():
     buffer = io.BytesIO()
     writer.write(buffer)
     buffer.seek(0)
-    return add_cors(make_response(send_file(buffer, mimetype='application/pdf', as_attachment=True, download_name='protected.pdf')))
+    return cors(make_response(send_file(buffer,
+        mimetype='application/pdf', as_attachment=True, download_name='protected.pdf')))
 
 
 @app.route('/pdf/unlock', methods=['POST', 'OPTIONS'])
@@ -166,7 +149,8 @@ def unlock_pdf():
     buffer = io.BytesIO()
     writer.write(buffer)
     buffer.seek(0)
-    return add_cors(make_response(send_file(buffer, mimetype='application/pdf', as_attachment=True, download_name='unlocked.pdf')))
+    return cors(make_response(send_file(buffer,
+        mimetype='application/pdf', as_attachment=True, download_name='unlocked.pdf')))
 
 
 @app.route('/pdf/pagenumbers', methods=['POST', 'OPTIONS'])
@@ -181,7 +165,7 @@ def add_page_numbers():
         packet = io.BytesIO()
         c = pdf_canvas.Canvas(packet, pagesize=letter)
         c.setFont('Helvetica', 10)
-        c.drawString(280, 20, f'Page {i + 1}')
+        c.drawString(280, 20, 'Page {}'.format(i + 1))
         c.save()
         packet.seek(0)
         from PyPDF2 import PdfReader as PR
@@ -191,7 +175,30 @@ def add_page_numbers():
     buffer = io.BytesIO()
     writer.write(buffer)
     buffer.seek(0)
-    return add_cors(make_response(send_file(buffer, mimetype='application/pdf', as_attachment=True, download_name='numbered.pdf')))
+    return cors(make_response(send_file(buffer,
+        mimetype='application/pdf', as_attachment=True, download_name='numbered.pdf')))
+
+
+@app.route('/csv-columns', methods=['POST', 'OPTIONS'])
+def get_columns():
+    import csv
+    file = request.files['file']
+    filename = file.filename.lower()
+    try:
+        if filename.endswith('.csv'):
+            content = file.read().decode('utf-8').splitlines()
+            reader = csv.DictReader(content)
+            columns = list(reader.fieldnames)
+        elif filename.endswith('.xlsx'):
+            import openpyxl
+            wb = openpyxl.load_workbook(file)
+            ws = wb.active
+            columns = [cell.value for cell in ws[1] if cell.value]
+        else:
+            return cors(make_response(jsonify({'error': 'Unsupported file'}), 400))
+        return cors(make_response(jsonify({'columns': columns})))
+    except Exception as e:
+        return cors(make_response(jsonify({'error': str(e)}), 500))
 
 
 @app.route('/csv-to-kml', methods=['POST', 'OPTIONS'])
@@ -203,7 +210,6 @@ def csv_to_kml():
     name_col = request.form['name']
     desc_col = request.form.get('desc', '')
     filename = file.filename.lower()
-
     rows = []
     if filename.endswith('.csv'):
         content = file.read().decode('utf-8').splitlines()
@@ -216,22 +222,25 @@ def csv_to_kml():
         headers = [cell.value for cell in ws[1]]
         for row in ws.iter_rows(min_row=2, values_only=True):
             rows.append(dict(zip(headers, row)))
-
-    kml_lines = ['<?xml version="1.0" encoding="UTF-8"?>',
-                 '<kml xmlns="http://www.opengis.net/kml/2.2"><Document>']
+    kml_lines = [
+        '<?xml version="1.0" encoding="UTF-8"?>',
+        '<kml xmlns="http://www.opengis.net/kml/2.2"><Document>'
+    ]
     for row in rows:
         name = row.get(name_col, 'Point')
         desc = row.get(desc_col, '') if desc_col else ''
         lat = row.get(lat_col, 0)
         lng = row.get(lng_col, 0)
-        kml_lines.append(f'''<Placemark>
-  <name>{name}</name>
-  <description>{desc}</description>
-  <Point><coordinates>{lng},{lat},0</coordinates></Point>
-</Placemark>''')
+        kml_lines.append(
+            '<Placemark><name>{}</name><description>{}</description>'
+            '<Point><coordinates>{},{},0</coordinates></Point></Placemark>'.format(
+                name, desc, lng, lat))
     kml_lines.append('</Document></kml>')
-    kml_content = '\n'.join(kml_lines)
-    return add_cors(make_response(send_file(io.BytesIO(kml_content.encode()), mimetype='application/vnd.google-earth.kml+xml', as_attachment=True, download_name='output.kml')))
+    return cors(make_response(send_file(
+        io.BytesIO('\n'.join(kml_lines).encode()),
+        mimetype='application/vnd.google-earth.kml+xml',
+        as_attachment=True,
+        download_name='output.kml')))
 
 
 @app.route('/remove-bg', methods=['POST', 'OPTIONS'])
@@ -245,12 +254,90 @@ def remove_bg():
     a = a.filter(ImageFilter.SMOOTH_MORE)
     a = a.filter(ImageFilter.SMOOTH_MORE)
     result = Image.merge('RGBA', (r, g, b, a))
-    enhancer = ImageEnhance.Sharpness(result)
-    result = enhancer.enhance(1.5)
+    result = ImageEnhance.Sharpness(result).enhance(1.5)
     buffer = io.BytesIO()
     result.save(buffer, format='PNG')
     buffer.seek(0)
-    return add_cors(make_response(send_file(buffer, mimetype='image/png', as_attachment=True, download_name='no-background.png')))
+    return cors(make_response(send_file(buffer,
+        mimetype='image/png', as_attachment=True, download_name='no-background.png')))
+
+
+@app.route('/media/info', methods=['POST', 'OPTIONS'])
+def media_info():
+    import yt_dlp
+    url = request.form.get('url', '').strip()
+    if not url:
+        return cors(make_response(jsonify({'error': 'No URL provided'}), 400))
+    try:
+        ydl_opts = {'quiet': True, 'no_warnings': True, 'skip_download': True}
+        with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+            info = ydl.extract_info(url, download=False)
+            return cors(make_response(jsonify({
+                'title': info.get('title', 'Unknown'),
+                'thumbnail': info.get('thumbnail', ''),
+                'duration': info.get('duration', 0)
+            })))
+    except Exception as e:
+        return cors(make_response(jsonify({'error': str(e)}), 500))
+
+
+@app.route('/media/download', methods=['POST', 'OPTIONS'])
+def media_download():
+    import yt_dlp
+    url = request.form.get('url', '').strip()
+    fmt = request.form.get('format', 'mp4-best')
+    if not url:
+        return cors(make_response(jsonify({'error': 'No URL provided'}), 400))
+    try:
+        tmp_dir = tempfile.mkdtemp()
+        output_path = os.path.join(tmp_dir, 'download.%(ext)s')
+
+        if fmt == 'mp3':
+            ydl_opts = {
+                'format': 'bestaudio/best',
+                'outtmpl': output_path,
+                'quiet': True,
+                'postprocessors': [{
+                    'key': 'FFmpegExtractAudio',
+                    'preferredcodec': 'mp3',
+                    'preferredquality': '192',
+                }]
+            }
+        else:
+            quality_map = {
+                'mp4-best': 'bestvideo[ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]/best',
+                'mp4-720': 'bestvideo[height<=720][ext=mp4]+bestaudio[ext=m4a]/best[height<=720]/best',
+                'mp4-480': 'bestvideo[height<=480][ext=mp4]+bestaudio[ext=m4a]/best[height<=480]/best',
+            }
+            ydl_opts = {
+                'format': quality_map.get(fmt, 'best'),
+                'outtmpl': output_path,
+                'quiet': True,
+                'merge_output_format': 'mp4'
+            }
+
+        with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+            ydl.download([url])
+
+        files = os.listdir(tmp_dir)
+        if not files:
+            return cors(make_response(jsonify({'error': 'Download failed'}), 500))
+
+        file_path = os.path.join(tmp_dir, files[0])
+        ext = files[0].split('.')[-1]
+        mimetype = 'audio/mpeg' if ext == 'mp3' else 'video/mp4'
+
+        with open(file_path, 'rb') as f:
+            data = f.read()
+
+        return cors(make_response(send_file(
+            io.BytesIO(data),
+            mimetype=mimetype,
+            as_attachment=True,
+            download_name='fileshift-download.{}'.format(ext)
+        )))
+    except Exception as e:
+        return cors(make_response(jsonify({'error': str(e)}), 500))
 
 
 if __name__ == '__main__':

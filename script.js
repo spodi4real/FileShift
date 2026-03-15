@@ -1,111 +1,192 @@
 const BACKEND = 'https://fileshift-production.up.railway.app';
-const status = document.getElementById('status');
 
-function showStatus(message, type) {
-  status.textContent = message;
-  status.className = type;
+// ── TOAST ──────────────────────────────────────────────────────
+function toast(message, type) {
+  type = type || 'loading';
+  var t = document.getElementById('statusToast');
+  t.textContent = message;
+  t.className = 'toast ' + type;
+  t.classList.add('show');
+  if (type !== 'loading') {
+    setTimeout(function() { t.classList.remove('show'); }, 3500);
+  }
 }
 
-function showTool(toolId, el) {
-  document.querySelectorAll('.tool-section').forEach(s => s.classList.remove('active'));
-  document.querySelectorAll('.tool-card').forEach(c => c.classList.remove('active'));
-  document.getElementById('tool-' + toolId).classList.add('active');
-  el.classList.add('active');
-  status.className = '';
-  status.textContent = '';
+// ── NAVIGATION ─────────────────────────────────────────────────
+function showHero() {
+  document.getElementById('hero').style.display = 'flex';
+  document.querySelectorAll('.section').forEach(function(s) {
+    s.classList.remove('active');
+  });
 }
 
+function showSection(id) {
+  document.getElementById('hero').style.display = 'none';
+  document.querySelectorAll('.section').forEach(function(s) {
+    s.classList.remove('active');
+  });
+  document.getElementById('section-' + id).classList.add('active');
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function showTab(id) {
+  var section = document.getElementById('tab-' + id).closest('.section');
+  section.querySelectorAll('.tab-content').forEach(function(t) {
+    t.classList.remove('active');
+  });
+  section.querySelectorAll('.tab').forEach(function(t) {
+    t.classList.remove('active');
+  });
+  document.getElementById('tab-' + id).classList.add('active');
+  section.querySelectorAll('.tab').forEach(function(t) {
+    var onclick = t.getAttribute('onclick') || '';
+    if (onclick.indexOf("'" + id + "'") !== -1) {
+      t.classList.add('active');
+    }
+  });
+}
+
+function showImageTab(id) {
+  var section = document.getElementById('section-image');
+  section.querySelectorAll('.tab-content').forEach(function(t) {
+    t.classList.remove('active');
+  });
+  section.querySelectorAll('.tab').forEach(function(t) {
+    t.classList.remove('active');
+  });
+  document.getElementById('tab-' + id).classList.add('active');
+  section.querySelectorAll('.tab').forEach(function(t) {
+    var onclick = t.getAttribute('onclick') || '';
+    if (onclick.indexOf("'" + id + "'") !== -1) {
+      t.classList.add('active');
+    }
+  });
+}
+
+// ── DOWNLOAD HELPER ────────────────────────────────────────────
 function download(blob, filename) {
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
+  var url = URL.createObjectURL(blob);
+  var a = document.createElement('a');
   a.href = url;
   a.download = filename;
   a.click();
+  setTimeout(function() { URL.revokeObjectURL(url); }, 1000);
 }
 
+// ── BACKEND HELPER ─────────────────────────────────────────────
 async function postToBackend(endpoint, formData) {
-  const response = await fetch(BACKEND + endpoint, {
+  var response = await fetch(BACKEND + endpoint, {
     method: 'POST',
     body: formData
   });
   if (!response.ok) {
-    const err = await response.json().catch(() => ({ error: 'Unknown error' }));
+    var err = await response.json().catch(function() { return { error: 'Server error' }; });
     throw new Error(err.error || 'Request failed');
   }
   return await response.blob();
 }
 
-// ─── FILE CONVERTER ───────────────────────────────────────────
+// ── DROP ZONES ─────────────────────────────────────────────────
+function setupDropZone(dropId, inputId, labelId, onFile) {
+  var drop = document.getElementById(dropId);
+  var input = document.getElementById(inputId);
 
-const fileInput = document.getElementById('fileInput');
-const formatSelect = document.getElementById('formatSelect');
+  drop.addEventListener('click', function() { input.click(); });
 
-fileInput.addEventListener('change', function() {
-  const file = fileInput.files[0];
-  if (!file) return;
-  document.getElementById('uploadLabel').textContent = '✅ ' + file.name;
-  const name = file.name.toLowerCase();
-  formatSelect.innerHTML = '<option value="">-- Select format --</option>';
-  if (name.endsWith('.jpg') || name.endsWith('.jpeg') || name.endsWith('.png') || name.endsWith('.webp') || name.endsWith('.gif') || name.endsWith('.bmp')) {
-    addOptions(['JPG', 'PNG', 'WebP', 'GIF', 'BMP']);
-  } else if (name.endsWith('.mp3') || name.endsWith('.wav') || name.endsWith('.aac') || name.endsWith('.flac') || name.endsWith('.ogg')) {
-    addOptions(['MP3', 'WAV', 'AAC', 'FLAC', 'OGG']);
-  } else if (name.endsWith('.pdf') || name.endsWith('.docx') || name.endsWith('.txt') || name.endsWith('.md') || name.endsWith('.html') || name.endsWith('.csv')) {
-    addOptions(['PDF', 'TXT', 'HTML', 'CSV']);
-  } else {
-    showStatus('⚠️ Unsupported file type!', 'error');
-  }
-});
+  drop.addEventListener('dragover', function(e) {
+    e.preventDefault();
+    drop.classList.add('dragover');
+  });
 
-function addOptions(formats) {
-  formats.forEach(function(fmt) {
-    const option = document.createElement('option');
-    option.value = fmt.toLowerCase();
-    option.textContent = fmt;
-    formatSelect.appendChild(option);
+  drop.addEventListener('dragleave', function() {
+    drop.classList.remove('dragover');
+  });
+
+  drop.addEventListener('drop', function(e) {
+    e.preventDefault();
+    drop.classList.remove('dragover');
+    var file = e.dataTransfer.files[0];
+    if (file) {
+      var dt = e.dataTransfer;
+      try { input.files = dt.files; } catch(err) {}
+      if (labelId) document.getElementById(labelId).textContent = '✅ ' + file.name;
+      if (onFile) onFile(file);
+    }
+  });
+
+  input.addEventListener('change', function() {
+    var file = input.files[0];
+    if (file) {
+      if (labelId) document.getElementById(labelId).textContent = '✅ ' + file.name;
+      if (onFile) onFile(file);
+    }
   });
 }
 
+// ── FILE CONVERTER ─────────────────────────────────────────────
+setupDropZone('converterDrop', 'converterInput', 'converterFileName', function(file) {
+  var name = file.name.toLowerCase();
+  var formatSelect = document.getElementById('formatSelect');
+  formatSelect.innerHTML = '';
+  var formats = [];
+
+  if (name.match(/\.(jpg|jpeg|png|webp|gif|bmp)$/)) {
+    formats = ['JPG', 'PNG', 'WebP', 'GIF', 'BMP'];
+  } else if (name.match(/\.(mp3|wav|aac|flac|ogg)$/)) {
+    formats = ['MP3', 'WAV', 'AAC', 'FLAC', 'OGG'];
+  } else if (name.match(/\.(pdf|docx|txt|md|html|csv)$/)) {
+    formats = ['PDF', 'TXT', 'HTML', 'CSV'];
+  } else {
+    toast('Unsupported file type!', 'error');
+    return;
+  }
+
+  formats.forEach(function(fmt) {
+    var opt = document.createElement('option');
+    opt.value = fmt.toLowerCase();
+    opt.textContent = fmt;
+    formatSelect.appendChild(opt);
+  });
+
+  document.getElementById('converterFormatRow').style.display = 'flex';
+});
+
 async function handleConvert() {
-  const file = fileInput.files[0];
-  const format = formatSelect.value;
-  if (!file) { showStatus('⚠️ Please upload a file first!', 'error'); return; }
-  if (!format) { showStatus('⚠️ Please select a format!', 'error'); return; }
-  const name = file.name.toLowerCase();
-  if (name.endsWith('.jpg') || name.endsWith('.jpeg') || name.endsWith('.png') || name.endsWith('.webp') || name.endsWith('.gif') || name.endsWith('.bmp')) {
+  var file = document.getElementById('converterInput').files[0];
+  var format = document.getElementById('formatSelect').value;
+  if (!file || !format) { toast('Please upload a file and select a format!', 'error'); return; }
+  var name = file.name.toLowerCase();
+  if (name.match(/\.(jpg|jpeg|png|webp|gif|bmp)$/)) {
     convertImage(file, format);
-  } else if (name.endsWith('.mp3') || name.endsWith('.wav') || name.endsWith('.aac') || name.endsWith('.flac') || name.endsWith('.ogg')) {
+  } else if (name.match(/\.(mp3|wav|aac|flac|ogg)$/)) {
     convertAudio(file, format);
   } else {
     try {
-      showStatus('⏳ Converting your file...', 'loading');
-      const formData = new FormData();
+      toast('Converting your file...', 'loading');
+      var formData = new FormData();
       formData.append('file', file);
       formData.append('format', format);
-      const blob = await postToBackend('/convert', formData);
+      var blob = await postToBackend('/convert', formData);
       download(blob, 'fileshift-converted.' + format);
-      showStatus('✅ File converted successfully!', 'success');
-    } catch (err) {
-      showStatus('❌ ' + err.message, 'error');
-    }
+      toast('Converted successfully!', 'success');
+    } catch(err) { toast(err.message, 'error'); }
   }
 }
 
 function convertImage(file, format) {
-  showStatus('⏳ Converting your image...', 'loading');
-  const reader = new FileReader();
+  toast('Converting image...', 'loading');
+  var reader = new FileReader();
   reader.onload = function(e) {
-    const img = new Image();
+    var img = new Image();
     img.onload = function() {
-      const canvas = document.createElement('canvas');
+      var canvas = document.createElement('canvas');
       canvas.width = img.width;
       canvas.height = img.height;
-      const ctx = canvas.getContext('2d');
-      ctx.drawImage(img, 0, 0);
-      const mimeType = 'image/' + (format === 'jpg' ? 'jpeg' : format);
+      canvas.getContext('2d').drawImage(img, 0, 0);
+      var mimeType = 'image/' + (format === 'jpg' ? 'jpeg' : format);
       canvas.toBlob(function(blob) {
         download(blob, 'fileshift-converted.' + format);
-        showStatus('✅ Image converted successfully!', 'success');
+        toast('Image converted!', 'success');
       }, mimeType);
     };
     img.src = e.target.result;
@@ -114,307 +195,396 @@ function convertImage(file, format) {
 }
 
 async function convertAudio(file, format) {
-  showStatus('⏳ Loading audio converter... this may take a moment!', 'loading');
+  toast('Loading audio converter...', 'loading');
   try {
-    const { createFFmpeg, fetchFile } = FFmpeg;
-    const ffmpeg = createFFmpeg({ log: true });
+    var FFmpegObj = FFmpeg;
+    var createFFmpeg = FFmpegObj.createFFmpeg;
+    var fetchFile = FFmpegObj.fetchFile;
+    var ffmpeg = createFFmpeg({ log: false });
     await ffmpeg.load();
-    const inputName = 'input.' + file.name.split('.').pop();
-    const outputName = 'output.' + format;
+    var inputName = 'input.' + file.name.split('.').pop();
+    var outputName = 'output.' + format;
     ffmpeg.FS('writeFile', inputName, await fetchFile(file));
     await ffmpeg.run('-i', inputName, outputName);
-    const data = ffmpeg.FS('readFile', outputName);
-    const blob = new Blob([data.buffer], { type: 'audio/' + format });
+    var data = ffmpeg.FS('readFile', outputName);
+    var blob = new Blob([data.buffer], { type: 'audio/' + format });
     download(blob, 'fileshift-converted.' + format);
-    showStatus('✅ Audio converted successfully!', 'success');
-  } catch (err) {
-    showStatus('❌ Audio conversion failed: ' + err.message, 'error');
-  }
+    toast('Audio converted!', 'success');
+  } catch(err) { toast(err.message, 'error'); }
 }
 
-// ─── MERGE PDF ────────────────────────────────────────────────
-
-document.getElementById('mergeInput').addEventListener('change', function() {
-  if (this.files.length > 0) {
-    document.getElementById('mergeLabel').textContent = '✅ ' + this.files.length + ' files selected';
-  }
+// ── PDF TOOLS ──────────────────────────────────────────────────
+setupDropZone('mergeDrop', 'mergeInput', null, function() {
+  var files = document.getElementById('mergeInput').files;
+  var list = document.getElementById('mergeFileList');
+  list.innerHTML = '';
+  Array.from(files).forEach(function(f) {
+    var item = document.createElement('div');
+    item.className = 'file-item';
+    item.innerHTML = '<i class="fa-solid fa-file-pdf"></i> ' + f.name;
+    list.appendChild(item);
+  });
 });
 
 async function mergePDFs() {
-  const files = document.getElementById('mergeInput').files;
-  if (files.length < 2) { showStatus('⚠️ Please upload at least 2 PDF files!', 'error'); return; }
+  var files = document.getElementById('mergeInput').files;
+  if (files.length < 2) { toast('Upload at least 2 PDFs!', 'error'); return; }
   try {
-    showStatus('⏳ Merging PDFs...', 'loading');
-    const formData = new FormData();
-    for (const file of files) formData.append('files', file);
-    const blob = await postToBackend('/pdf/merge', formData);
+    toast('Merging PDFs...', 'loading');
+    var formData = new FormData();
+    Array.from(files).forEach(function(f) { formData.append('files', f); });
+    var blob = await postToBackend('/pdf/merge', formData);
     download(blob, 'merged.pdf');
-    showStatus('✅ PDFs merged successfully!', 'success');
-  } catch (err) {
-    showStatus('❌ ' + err.message, 'error');
-  }
+    toast('PDFs merged!', 'success');
+  } catch(err) { toast(err.message, 'error'); }
 }
 
-// ─── SPLIT PDF ────────────────────────────────────────────────
-
-document.getElementById('splitInput').addEventListener('change', function() {
-  if (this.files[0]) document.getElementById('splitLabel').textContent = '✅ ' + this.files[0].name;
-});
-
+setupDropZone('splitDrop', 'splitInput', 'splitFileName', null);
 async function splitPDF() {
-  const file = document.getElementById('splitInput').files[0];
-  if (!file) { showStatus('⚠️ Please upload a PDF!', 'error'); return; }
+  var file = document.getElementById('splitInput').files[0];
+  if (!file) { toast('Upload a PDF first!', 'error'); return; }
   try {
-    showStatus('⏳ Splitting PDF...', 'loading');
-    const formData = new FormData();
+    toast('Splitting PDF...', 'loading');
+    var formData = new FormData();
     formData.append('file', file);
-    const blob = await postToBackend('/pdf/split', formData);
+    var blob = await postToBackend('/pdf/split', formData);
     download(blob, 'split_pages.zip');
-    showStatus('✅ PDF split successfully! A ZIP file was downloaded.', 'success');
-  } catch (err) {
-    showStatus('❌ ' + err.message, 'error');
-  }
+    toast('PDF split! ZIP downloaded.', 'success');
+  } catch(err) { toast(err.message, 'error'); }
 }
 
-// ─── PROTECT PDF ─────────────────────────────────────────────
-
-document.getElementById('protectInput').addEventListener('change', function() {
-  if (this.files[0]) document.getElementById('protectLabel').textContent = '✅ ' + this.files[0].name;
-});
-
+setupDropZone('protectDrop', 'protectInput', 'protectFileName', null);
 async function protectPDF() {
-  const file = document.getElementById('protectInput').files[0];
-  const password = document.getElementById('protectPassword').value;
-  if (!file) { showStatus('⚠️ Please upload a PDF!', 'error'); return; }
-  if (!password) { showStatus('⚠️ Please enter a password!', 'error'); return; }
+  var file = document.getElementById('protectInput').files[0];
+  var password = document.getElementById('protectPassword').value;
+  if (!file) { toast('Upload a PDF first!', 'error'); return; }
+  if (!password) { toast('Enter a password!', 'error'); return; }
   try {
-    showStatus('⏳ Protecting PDF...', 'loading');
-    const formData = new FormData();
+    toast('Protecting PDF...', 'loading');
+    var formData = new FormData();
     formData.append('file', file);
     formData.append('password', password);
-    const blob = await postToBackend('/pdf/protect', formData);
+    var blob = await postToBackend('/pdf/protect', formData);
     download(blob, 'protected.pdf');
-    showStatus('✅ PDF protected successfully!', 'success');
-  } catch (err) {
-    showStatus('❌ ' + err.message, 'error');
-  }
+    toast('PDF protected!', 'success');
+  } catch(err) { toast(err.message, 'error'); }
 }
 
-// ─── UNLOCK PDF ───────────────────────────────────────────────
-
-document.getElementById('unlockInput').addEventListener('change', function() {
-  if (this.files[0]) document.getElementById('unlockLabel').textContent = '✅ ' + this.files[0].name;
-});
-
+setupDropZone('unlockDrop', 'unlockInput', 'unlockFileName', null);
 async function unlockPDF() {
-  const file = document.getElementById('unlockInput').files[0];
-  const password = document.getElementById('unlockPassword').value;
-  if (!file) { showStatus('⚠️ Please upload a PDF!', 'error'); return; }
-  if (!password) { showStatus('⚠️ Please enter the password!', 'error'); return; }
+  var file = document.getElementById('unlockInput').files[0];
+  var password = document.getElementById('unlockPassword').value;
+  if (!file) { toast('Upload a PDF first!', 'error'); return; }
+  if (!password) { toast('Enter the password!', 'error'); return; }
   try {
-    showStatus('⏳ Unlocking PDF...', 'loading');
-    const formData = new FormData();
+    toast('Unlocking PDF...', 'loading');
+    var formData = new FormData();
     formData.append('file', file);
     formData.append('password', password);
-    const blob = await postToBackend('/pdf/unlock', formData);
+    var blob = await postToBackend('/pdf/unlock', formData);
     download(blob, 'unlocked.pdf');
-    showStatus('✅ PDF unlocked successfully!', 'success');
-  } catch (err) {
-    showStatus('❌ ' + err.message, 'error');
-  }
+    toast('PDF unlocked!', 'success');
+  } catch(err) { toast(err.message, 'error'); }
 }
 
-// ─── PAGE NUMBERS ─────────────────────────────────────────────
-
-document.getElementById('pageNumInput').addEventListener('change', function() {
-  if (this.files[0]) document.getElementById('pageNumLabel').textContent = '✅ ' + this.files[0].name;
-});
-
+setupDropZone('pageNumDrop', 'pageNumInput', 'pageNumFileName', null);
 async function addPageNumbers() {
-  const file = document.getElementById('pageNumInput').files[0];
-  if (!file) { showStatus('⚠️ Please upload a PDF!', 'error'); return; }
+  var file = document.getElementById('pageNumInput').files[0];
+  if (!file) { toast('Upload a PDF first!', 'error'); return; }
   try {
-    showStatus('⏳ Adding page numbers...', 'loading');
-    const formData = new FormData();
+    toast('Adding page numbers...', 'loading');
+    var formData = new FormData();
     formData.append('file', file);
-    const blob = await postToBackend('/pdf/pagenumbers', formData);
+    var blob = await postToBackend('/pdf/pagenumbers', formData);
     download(blob, 'numbered.pdf');
-    showStatus('✅ Page numbers added successfully!', 'success');
-  } catch (err) {
-    showStatus('❌ ' + err.message, 'error');
-  }
+    toast('Page numbers added!', 'success');
+  } catch(err) { toast(err.message, 'error'); }
 }
 
-// ─── IMAGE TO PDF ─────────────────────────────────────────────
-
-document.getElementById('imgPdfInput').addEventListener('change', function() {
-  if (this.files[0]) document.getElementById('imgPdfLabel').textContent = '✅ ' + this.files[0].name;
-});
-
-async function imageToPDF() {
-  const file = document.getElementById('imgPdfInput').files[0];
-  if (!file) { showStatus('⚠️ Please upload an image!', 'error'); return; }
-  try {
-    showStatus('⏳ Converting image to PDF...', 'loading');
-    const formData = new FormData();
-    formData.append('file', file);
-    formData.append('format', 'pdf');
-    const blob = await postToBackend('/convert', formData);
-    download(blob, 'converted.pdf');
-    showStatus('✅ Image converted to PDF successfully!', 'success');
-  } catch (err) {
-    showStatus('❌ ' + err.message, 'error');
-  }
-}
-
-// ─── WORD TO PDF ──────────────────────────────────────────────
-
-document.getElementById('wordPdfInput').addEventListener('change', function() {
-  if (this.files[0]) document.getElementById('wordPdfLabel').textContent = '✅ ' + this.files[0].name;
-});
-
+setupDropZone('wordDrop', 'wordInput', 'wordFileName', null);
 async function wordToPDF() {
-  const file = document.getElementById('wordPdfInput').files[0];
-  if (!file) { showStatus('⚠️ Please upload a Word file!', 'error'); return; }
+  var file = document.getElementById('wordInput').files[0];
+  if (!file) { toast('Upload a Word file first!', 'error'); return; }
   try {
-    showStatus('⏳ Converting Word to PDF...', 'loading');
-    const formData = new FormData();
+    toast('Converting to PDF...', 'loading');
+    var formData = new FormData();
     formData.append('file', file);
     formData.append('format', 'pdf');
-    const blob = await postToBackend('/convert', formData);
+    var blob = await postToBackend('/convert', formData);
     download(blob, 'converted.pdf');
-    showStatus('✅ Word file converted to PDF successfully!', 'success');
-  } catch (err) {
-    showStatus('❌ ' + err.message, 'error');
-  }
+    toast('Word converted to PDF!', 'success');
+  } catch(err) { toast(err.message, 'error'); }
 }
 
-// ─── CSV/XLSX TO KML ──────────────────────────────────────────
-
-document.getElementById('kmlInput').addEventListener('change', async function() {
-  const file = this.files[0];
-  if (!file) return;
-  document.getElementById('kmlLabel').textContent = '✅ ' + file.name;
-
+setupDropZone('imgPdfDrop', 'imgPdfInput', 'imgPdfFileName', null);
+async function imageToPDF() {
+  var file = document.getElementById('imgPdfInput').files[0];
+  if (!file) { toast('Upload an image first!', 'error'); return; }
   try {
-    showStatus('⏳ Reading columns...', 'loading');
-    const formData = new FormData();
+    toast('Converting to PDF...', 'loading');
+    var formData = new FormData();
     formData.append('file', file);
-    const response = await fetch(BACKEND + '/csv-columns', {
-      method: 'POST',
-      body: formData
-    });
-    const data = await response.json();
-    const columns = data.columns;
+    formData.append('format', 'pdf');
+    var blob = await postToBackend('/convert', formData);
+    download(blob, 'converted.pdf');
+    toast('Image converted to PDF!', 'success');
+  } catch(err) { toast(err.message, 'error'); }
+}
 
-    ['kmlLat', 'kmlLng', 'kmlName'].forEach(id => {
-      const select = document.getElementById(id);
+// ── MEDIA DOWNLOADER ───────────────────────────────────────────
+async function fetchMediaInfo() {
+  var url = document.getElementById('mediaUrl').value.trim();
+  if (!url) { toast('Paste a video URL first!', 'error'); return; }
+  try {
+    toast('Fetching video info...', 'loading');
+    var formData = new FormData();
+    formData.append('url', url);
+    var response = await fetch(BACKEND + '/media/info', { method: 'POST', body: formData });
+    var data = await response.json();
+    if (!response.ok) throw new Error(data.error || 'Failed to fetch');
+    document.getElementById('mediaThumbnail').src = data.thumbnail;
+    document.getElementById('mediaTitle').textContent = data.title;
+    document.getElementById('mediaResult').style.display = 'block';
+    toast('Video found!', 'success');
+  } catch(err) { toast(err.message, 'error'); }
+}
+
+async function downloadMedia() {
+  var url = document.getElementById('mediaUrl').value.trim();
+  var format = document.getElementById('mediaFormat').value;
+  if (!url) { toast('No URL found!', 'error'); return; }
+  try {
+    toast('Downloading... this may take a moment!', 'loading');
+    var formData = new FormData();
+    formData.append('url', url);
+    formData.append('format', format);
+    var response = await fetch(BACKEND + '/media/download', { method: 'POST', body: formData });
+    if (!response.ok) {
+      var err = await response.json().catch(function() { return { error: 'Download failed' }; });
+      throw new Error(err.error);
+    }
+    var blob = await response.blob();
+    var ext = format === 'mp3' ? 'mp3' : 'mp4';
+    download(blob, 'fileshift-download.' + ext);
+    toast('Downloaded!', 'success');
+  } catch(err) { toast(err.message, 'error'); }
+}
+
+// ── REMOVE BACKGROUND ──────────────────────────────────────────
+var removedBgBlob = null;
+
+setupDropZone('removeBgDrop', 'removeBgInput', 'removeBgFileName', function(file) {
+  var reader = new FileReader();
+  reader.onload = function(e) {
+    document.getElementById('removeBgOriginal').src = e.target.result;
+  };
+  reader.readAsDataURL(file);
+});
+
+async function removeBackground() {
+  var file = document.getElementById('removeBgInput').files[0];
+  if (!file) { toast('Upload an image first!', 'error'); return; }
+  try {
+    toast('Removing background... this may take a moment!', 'loading');
+    var formData = new FormData();
+    formData.append('file', file);
+    var blob = await postToBackend('/remove-bg', formData);
+    removedBgBlob = blob;
+    var url = URL.createObjectURL(blob);
+    document.getElementById('removeBgResult').src = url;
+    document.getElementById('removeBgPreview').style.display = 'block';
+    document.getElementById('removeBgBtn').style.display = 'none';
+    toast('Background removed!', 'success');
+  } catch(err) { toast(err.message, 'error'); }
+}
+
+function downloadRemovedBg() {
+  if (removedBgBlob) download(removedBgBlob, 'no-background.png');
+}
+
+// ── CROP IMAGE ─────────────────────────────────────────────────
+var cropImg = null;
+var cropRect = { x: 0, y: 0, w: 0, h: 0 };
+var dragging = null;
+var dragStart = { x: 0, y: 0 };
+var originalRect = {};
+var cropHandlesSetup = false;
+
+setupDropZone('cropDrop', 'cropInput', 'cropFileName', function(file) {
+  var reader = new FileReader();
+  reader.onload = function(e) {
+    cropImg = new Image();
+    cropImg.onload = function() {
+      var canvas = document.getElementById('cropCanvas');
+      var maxW = Math.min(cropImg.width, 700);
+      var scale = maxW / cropImg.width;
+      canvas.width = maxW;
+      canvas.height = cropImg.height * scale;
+      canvas.getContext('2d').drawImage(cropImg, 0, 0, canvas.width, canvas.height);
+      cropRect = { x: 0, y: 0, w: canvas.width, h: canvas.height };
+      updateOverlay();
+      document.getElementById('cropArea').style.display = 'block';
+      if (!cropHandlesSetup) {
+        setupCropHandles();
+        cropHandlesSetup = true;
+      }
+    };
+    cropImg.src = e.target.result;
+  };
+  reader.readAsDataURL(file);
+});
+
+function updateOverlay() {
+  var overlay = document.getElementById('cropOverlay');
+  var canvas = document.getElementById('cropCanvas');
+  var scaleX = canvas.offsetWidth / canvas.width;
+  var scaleY = canvas.offsetHeight / canvas.height;
+  overlay.style.left = (cropRect.x * scaleX) + 'px';
+  overlay.style.top = (cropRect.y * scaleY) + 'px';
+  overlay.style.width = (cropRect.w * scaleX) + 'px';
+  overlay.style.height = (cropRect.h * scaleY) + 'px';
+  document.getElementById('cropDimensions').textContent = 'W: ' + Math.round(cropRect.w) + 'px  H: ' + Math.round(cropRect.h) + 'px';
+}
+
+function setupCropHandles() {
+  var canvas = document.getElementById('cropCanvas');
+  var overlay = document.getElementById('cropOverlay');
+
+  function getScale() {
+    return {
+      x: canvas.width / canvas.offsetWidth,
+      y: canvas.height / canvas.offsetHeight
+    };
+  }
+
+  ['tl', 'tr', 'bl', 'br'].forEach(function(handle) {
+    var el = document.getElementById('handle-' + handle);
+    el.addEventListener('mousedown', function(e) {
+      e.stopPropagation();
+      dragging = handle;
+      dragStart = { x: e.clientX, y: e.clientY };
+      originalRect = { x: cropRect.x, y: cropRect.y, w: cropRect.w, h: cropRect.h };
+    });
+  });
+
+  overlay.addEventListener('mousedown', function(e) {
+    if (e.target === overlay) {
+      dragging = 'move';
+      dragStart = { x: e.clientX, y: e.clientY };
+      originalRect = { x: cropRect.x, y: cropRect.y, w: cropRect.w, h: cropRect.h };
+    }
+  });
+
+  document.addEventListener('mousemove', function(e) {
+    if (!dragging) return;
+    var scale = getScale();
+    var dx = (e.clientX - dragStart.x) * scale.x;
+    var dy = (e.clientY - dragStart.y) * scale.y;
+
+    if (dragging === 'move') {
+      cropRect.x = Math.max(0, Math.min(canvas.width - cropRect.w, originalRect.x + dx));
+      cropRect.y = Math.max(0, Math.min(canvas.height - cropRect.h, originalRect.y + dy));
+    } else if (dragging === 'br') {
+      cropRect.w = Math.max(20, Math.min(canvas.width - cropRect.x, originalRect.w + dx));
+      cropRect.h = Math.max(20, Math.min(canvas.height - cropRect.y, originalRect.h + dy));
+    } else if (dragging === 'tl') {
+      var newX = Math.max(0, Math.min(originalRect.x + originalRect.w - 20, originalRect.x + dx));
+      var newY = Math.max(0, Math.min(originalRect.y + originalRect.h - 20, originalRect.y + dy));
+      cropRect.w = originalRect.w + (originalRect.x - newX);
+      cropRect.h = originalRect.h + (originalRect.y - newY);
+      cropRect.x = newX;
+      cropRect.y = newY;
+    } else if (dragging === 'tr') {
+      var newY2 = Math.max(0, Math.min(originalRect.y + originalRect.h - 20, originalRect.y + dy));
+      cropRect.w = Math.max(20, Math.min(canvas.width - cropRect.x, originalRect.w + dx));
+      cropRect.h = originalRect.h + (originalRect.y - newY2);
+      cropRect.y = newY2;
+    } else if (dragging === 'bl') {
+      var newX2 = Math.max(0, Math.min(originalRect.x + originalRect.w - 20, originalRect.x + dx));
+      cropRect.w = originalRect.w + (originalRect.x - newX2);
+      cropRect.h = Math.max(20, Math.min(canvas.height - cropRect.y, originalRect.h + dy));
+      cropRect.x = newX2;
+    }
+    updateOverlay();
+  });
+
+  document.addEventListener('mouseup', function() { dragging = null; });
+}
+
+function cropImage() {
+  if (!cropImg) { toast('Upload an image first!', 'error'); return; }
+  var canvas = document.getElementById('cropCanvas');
+  var scaleX = cropImg.width / canvas.width;
+  var scaleY = cropImg.height / canvas.height;
+  var cropCanvas = document.createElement('canvas');
+  cropCanvas.width = Math.round(cropRect.w * scaleX);
+  cropCanvas.height = Math.round(cropRect.h * scaleY);
+  cropCanvas.getContext('2d').drawImage(
+    cropImg,
+    cropRect.x * scaleX, cropRect.y * scaleY,
+    cropRect.w * scaleX, cropRect.h * scaleY,
+    0, 0, cropCanvas.width, cropCanvas.height
+  );
+  cropCanvas.toBlob(function(blob) {
+    download(blob, 'cropped.png');
+    toast('Image cropped!', 'success');
+  });
+}
+
+// ── CSV TO KML ─────────────────────────────────────────────────
+setupDropZone('kmlDrop', 'kmlInput', 'kmlFileName', async function(file) {
+  try {
+    toast('Reading columns...', 'loading');
+    var formData = new FormData();
+    formData.append('file', file);
+    var response = await fetch(BACKEND + '/csv-columns', { method: 'POST', body: formData });
+    var data = await response.json();
+    var columns = data.columns;
+
+    ['kmlLat', 'kmlLng', 'kmlName'].forEach(function(id) {
+      var select = document.getElementById(id);
       select.innerHTML = '';
-      columns.forEach(col => {
-        const option = document.createElement('option');
-        option.value = col;
-        option.textContent = col;
-        select.appendChild(option);
+      columns.forEach(function(col) {
+        var opt = document.createElement('option');
+        opt.value = col;
+        opt.textContent = col;
+        select.appendChild(opt);
       });
     });
 
-    const descSelect = document.getElementById('kmlDesc');
+    var descSelect = document.getElementById('kmlDesc');
     descSelect.innerHTML = '<option value="">-- None --</option>';
-    columns.forEach(col => {
-      const option = document.createElement('option');
-      option.value = col;
-      option.textContent = col;
-      descSelect.appendChild(option);
+    columns.forEach(function(col) {
+      var opt = document.createElement('option');
+      opt.value = col;
+      opt.textContent = col;
+      descSelect.appendChild(opt);
     });
 
     document.getElementById('kmlFields').style.display = 'block';
-    showStatus('✅ Columns loaded! Now select which column is which.', 'success');
-  } catch (err) {
-    showStatus('❌ Could not read columns: ' + err.message, 'error');
+    toast('Columns detected!', 'success');
+  } catch(err) {
+    toast('Could not read columns: ' + err.message, 'error');
   }
 });
 
 async function convertToKML() {
-  const file = document.getElementById('kmlInput').files[0];
-  const lat = document.getElementById('kmlLat').value;
-  const lng = document.getElementById('kmlLng').value;
-  const name = document.getElementById('kmlName').value;
-  const desc = document.getElementById('kmlDesc').value;
-  if (!file) { showStatus('⚠️ Please upload a file!', 'error'); return; }
-  if (!lat || !lng || !name) { showStatus('⚠️ Please select Latitude, Longitude and Name columns!', 'error'); return; }
+  var file = document.getElementById('kmlInput').files[0];
+  var lat = document.getElementById('kmlLat').value;
+  var lng = document.getElementById('kmlLng').value;
+  var name = document.getElementById('kmlName').value;
+  var desc = document.getElementById('kmlDesc').value;
+  if (!file) { toast('Upload a file first!', 'error'); return; }
   try {
-    showStatus('⏳ Converting to KML...', 'loading');
-    const formData = new FormData();
+    toast('Converting to KML...', 'loading');
+    var formData = new FormData();
     formData.append('file', file);
     formData.append('lat', lat);
     formData.append('lng', lng);
     formData.append('name', name);
     formData.append('desc', desc);
-    const blob = await postToBackend('/csv-to-kml', formData);
+    var blob = await postToBackend('/csv-to-kml', formData);
     download(blob, 'output.kml');
-    showStatus('✅ File converted to KML successfully!', 'success');
-  } catch (err) {
-    showStatus('❌ ' + err.message, 'error');
-  }
-}
-
-// ─── REMOVE BACKGROUND ────────────────────────────────────────
-
-document.getElementById('removeBgInput').addEventListener('change', function() {
-  if (this.files[0]) document.getElementById('removeBgLabel').textContent = '✅ ' + this.files[0].name;
-});
-
-async function removeBackground() {
-  const file = document.getElementById('removeBgInput').files[0];
-  if (!file) { showStatus('⚠️ Please upload an image!', 'error'); return; }
-  try {
-    showStatus('⏳ Removing background... this may take a moment!', 'loading');
-    const formData = new FormData();
-    formData.append('file', file);
-    const blob = await postToBackend('/remove-bg', formData);
-    download(blob, 'no-background.png');
-    showStatus('✅ Background removed successfully!', 'success');
-  } catch (err) {
-    showStatus('❌ ' + err.message, 'error');
-  }
-}
-
-// ─── CROP IMAGE ───────────────────────────────────────────────
-
-document.getElementById('cropInput').addEventListener('change', function() {
-  const file = this.files[0];
-  if (!file) return;
-  document.getElementById('cropLabel').textContent = '✅ ' + file.name;
-  const reader = new FileReader();
-  reader.onload = function(e) {
-    const img = new Image();
-    img.onload = function() {
-      const canvas = document.getElementById('cropCanvas');
-      canvas.width = img.width;
-      canvas.height = img.height;
-      canvas.getContext('2d').drawImage(img, 0, 0);
-      canvas.style.display = 'block';
-      document.getElementById('cropW').value = img.width;
-      document.getElementById('cropH').value = img.height;
-      document.getElementById('cropControls').style.display = 'flex';
-    };
-    img.src = e.target.result;
-  };
-  reader.readAsDataURL(file);
-});
-
-function cropImage() {
-  const canvas = document.getElementById('cropCanvas');
-  const x = parseInt(document.getElementById('cropX').value);
-  const y = parseInt(document.getElementById('cropY').value);
-  const w = parseInt(document.getElementById('cropW').value);
-  const h = parseInt(document.getElementById('cropH').value);
-  const cropCanvas = document.createElement('canvas');
-  cropCanvas.width = w;
-  cropCanvas.height = h;
-  cropCanvas.getContext('2d').drawImage(canvas, x, y, w, h, 0, 0, w, h);
-  cropCanvas.toBlob(function(blob) {
-    download(blob, 'cropped.png');
-    showStatus('✅ Image cropped successfully!', 'success');
-  });
+    toast('KML file ready!', 'success');
+  } catch(err) { toast(err.message, 'error'); }
 }
