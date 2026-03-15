@@ -74,7 +74,6 @@ function convertImage(file, format) {
       canvas.height = img.height;
       const ctx = canvas.getContext('2d');
       ctx.drawImage(img, 0, 0);
-
       const mimeType = 'image/' + (format === 'jpg' ? 'jpeg' : format);
       canvas.toBlob(function(blob) {
         const url = URL.createObjectURL(blob);
@@ -92,52 +91,49 @@ function convertImage(file, format) {
 
 async function convertAudio(file, format) {
   showStatus('⏳ Loading audio converter... this may take a moment!', 'loading');
-  const { createFFmpeg, fetchFile } = FFmpeg;
-  const ffmpeg = createFFmpeg({ log: true });
-
-  await ffmpeg.load();
-
-  const inputName = 'input.' + file.name.split('.').pop();
-  const outputName = 'output.' + format;
-
-  ffmpeg.FS('writeFile', inputName, await fetchFile(file));
-  await ffmpeg.run('-i', inputName, outputName);
-
-  const data = ffmpeg.FS('readFile', outputName);
-  const blob = new Blob([data.buffer], { type: 'audio/' + format });
-  const url = URL.createObjectURL(blob);
-
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = 'fileshift-converted.' + format;
-  a.click();
-
-  showStatus('✅ Audio converted successfully!', 'success');
+  try {
+    const { createFFmpeg, fetchFile } = FFmpeg;
+    const ffmpeg = createFFmpeg({ log: true });
+    await ffmpeg.load();
+    const inputName = 'input.' + file.name.split('.').pop();
+    const outputName = 'output.' + format;
+    ffmpeg.FS('writeFile', inputName, await fetchFile(file));
+    await ffmpeg.run('-i', inputName, outputName);
+    const data = ffmpeg.FS('readFile', outputName);
+    const blob = new Blob([data.buffer], { type: 'audio/' + format });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'fileshift-converted.' + format;
+    a.click();
+    showStatus('✅ Audio converted successfully!', 'success');
+  } catch (err) {
+    showStatus('❌ Audio conversion failed: ' + err.message, 'error');
+  }
 }
 
 async function convertDocument(file, format) {
   showStatus('⏳ Converting your document...', 'loading');
-
-  const formData = new FormData();
-  formData.append('file', file);
-  formData.append('format', format);
-
-  const response = await fetch('http://127.0.0.1:5000/convert', {
-    method: 'POST',
-    body: formData
-  });
-
-  if (!response.ok) {
-    showStatus('❌ Sorry, that conversion is not supported yet!', 'error');
-    return;
+  try {
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('format', format);
+    const response = await fetch('https://fileshift-production.up.railway.app/convert', {
+      method: 'POST',
+      body: formData
+    });
+    if (!response.ok) {
+      showStatus('❌ Sorry, that conversion is not supported yet!', 'error');
+      return;
+    }
+    const blob = await response.blob();
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'fileshift-converted.' + format;
+    a.click();
+    showStatus('✅ Document converted successfully!', 'success');
+  } catch (err) {
+    showStatus('❌ Document conversion failed: ' + err.message, 'error');
   }
-
-  const blob = await response.blob();
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = 'fileshift-converted.' + format;
-  a.click();
-
-  showStatus('✅ Document converted successfully!', 'success');
 }
