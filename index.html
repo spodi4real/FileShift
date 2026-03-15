@@ -13,41 +13,17 @@
 
       <!-- TOOLS GRID -->
       <div class="tools-grid">
-
-        <div class="tool-card" onclick="showTool('converter')">
-          🔄 File Converter
-        </div>
-        <div class="tool-card" onclick="showTool('merge')">
-          📎 Merge PDFs
-        </div>
-        <div class="tool-card" onclick="showTool('split')">
-          ✂️ Split PDF
-        </div>
-        <div class="tool-card" onclick="showTool('protect')">
-          🔒 Protect PDF
-        </div>
-        <div class="tool-card" onclick="showTool('unlock')">
-          🔓 Unlock PDF
-        </div>
-        <div class="tool-card" onclick="showTool('pagenumbers')">
-          🔢 Add Page Numbers
-        </div>
-        <div class="tool-card" onclick="showTool('imgpdf')">
-          🖼️ Image to PDF
-        </div>
-        <div class="tool-card" onclick="showTool('wordpdf')">
-          📝 Word to PDF
-        </div>
-        <div class="tool-card" onclick="showTool('kml')">
-          🗺️ CSV/XLSX to KML
-        </div>
-        <div class="tool-card" onclick="showTool('removebg')">
-          🪄 Remove Background
-        </div>
-        <div class="tool-card" onclick="showTool('crop')">
-          ✂️ Crop Image
-        </div>
-
+        <div class="tool-card" onclick="showTool('converter', this)">🔄 File Converter</div>
+        <div class="tool-card" onclick="showTool('merge', this)">📎 Merge PDFs</div>
+        <div class="tool-card" onclick="showTool('split', this)">✂️ Split PDF</div>
+        <div class="tool-card" onclick="showTool('protect', this)">🔒 Protect PDF</div>
+        <div class="tool-card" onclick="showTool('unlock', this)">🔓 Unlock PDF</div>
+        <div class="tool-card" onclick="showTool('pagenumbers', this)">🔢 Add Page Numbers</div>
+        <div class="tool-card" onclick="showTool('imgpdf', this)">🖼️ Image to PDF</div>
+        <div class="tool-card" onclick="showTool('wordpdf', this)">📝 Word to PDF</div>
+        <div class="tool-card" onclick="showTool('kml', this)">🗺️ CSV/XLSX to KML</div>
+        <div class="tool-card" onclick="showTool('removebg', this)">🪄 Remove Background</div>
+        <div class="tool-card" onclick="showTool('crop', this)">✂️ Crop Image</div>
       </div>
 
       <!-- FILE CONVERTER -->
@@ -145,13 +121,19 @@
           <input type="file" id="kmlInput" accept=".csv,.xlsx" hidden />
           <p id="kmlLabel">📁 Click to upload CSV or XLSX</p>
         </div>
-        <div class="kml-fields">
-          <input type="text" id="kmlLat" placeholder="Latitude column name" class="text-input" />
-          <input type="text" id="kmlLng" placeholder="Longitude column name" class="text-input" />
-          <input type="text" id="kmlName" placeholder="Name column name" class="text-input" />
-          <input type="text" id="kmlDesc" placeholder="Description column (optional)" class="text-input" />
+        <div class="kml-fields" id="kmlFields" style="display:none;">
+          <label>Latitude column:</label>
+          <select id="kmlLat" class="text-input"></select>
+          <label>Longitude column:</label>
+          <select id="kmlLng" class="text-input"></select>
+          <label>Name column:</label>
+          <select id="kmlName" class="text-input"></select>
+          <label>Description column (optional):</label>
+          <select id="kmlDesc" class="text-input">
+            <option value="">-- None --</option>
+          </select>
+          <button onclick="convertToKML()">Convert to KML</button>
         </div>
-        <button onclick="convertToKML()">Convert to KML</button>
       </div>
 
       <!-- REMOVE BACKGROUND -->

@@ -6,11 +6,11 @@ function showStatus(message, type) {
   status.className = type;
 }
 
-function showTool(toolId) {
+function showTool(toolId, el) {
   document.querySelectorAll('.tool-section').forEach(s => s.classList.remove('active'));
   document.querySelectorAll('.tool-card').forEach(c => c.classList.remove('active'));
   document.getElementById('tool-' + toolId).classList.add('active');
-  event.currentTarget.classList.add('active');
+  el.classList.add('active');
   status.className = '';
   status.textContent = '';
 }
@@ -135,9 +135,8 @@ async function convertAudio(file, format) {
 // ─── MERGE PDF ────────────────────────────────────────────────
 
 document.getElementById('mergeInput').addEventListener('change', function() {
-  const files = this.files;
-  if (files.length > 0) {
-    document.getElementById('mergeLabel').textContent = '✅ ' + files.length + ' files selected';
+  if (this.files.length > 0) {
+    document.getElementById('mergeLabel').textContent = '✅ ' + this.files.length + ' files selected';
   }
 });
 
@@ -292,8 +291,47 @@ async function wordToPDF() {
 
 // ─── CSV/XLSX TO KML ──────────────────────────────────────────
 
-document.getElementById('kmlInput').addEventListener('change', function() {
-  if (this.files[0]) document.getElementById('kmlLabel').textContent = '✅ ' + this.files[0].name;
+document.getElementById('kmlInput').addEventListener('change', async function() {
+  const file = this.files[0];
+  if (!file) return;
+  document.getElementById('kmlLabel').textContent = '✅ ' + file.name;
+
+  try {
+    showStatus('⏳ Reading columns...', 'loading');
+    const formData = new FormData();
+    formData.append('file', file);
+    const response = await fetch(BACKEND + '/csv-columns', {
+      method: 'POST',
+      body: formData
+    });
+    const data = await response.json();
+    const columns = data.columns;
+
+    ['kmlLat', 'kmlLng', 'kmlName'].forEach(id => {
+      const select = document.getElementById(id);
+      select.innerHTML = '';
+      columns.forEach(col => {
+        const option = document.createElement('option');
+        option.value = col;
+        option.textContent = col;
+        select.appendChild(option);
+      });
+    });
+
+    const descSelect = document.getElementById('kmlDesc');
+    descSelect.innerHTML = '<option value="">-- None --</option>';
+    columns.forEach(col => {
+      const option = document.createElement('option');
+      option.value = col;
+      option.textContent = col;
+      descSelect.appendChild(option);
+    });
+
+    document.getElementById('kmlFields').style.display = 'block';
+    showStatus('✅ Columns loaded! Now select which column is which.', 'success');
+  } catch (err) {
+    showStatus('❌ Could not read columns: ' + err.message, 'error');
+  }
 });
 
 async function convertToKML() {
@@ -303,7 +341,7 @@ async function convertToKML() {
   const name = document.getElementById('kmlName').value;
   const desc = document.getElementById('kmlDesc').value;
   if (!file) { showStatus('⚠️ Please upload a file!', 'error'); return; }
-  if (!lat || !lng || !name) { showStatus('⚠️ Please fill in Latitude, Longitude and Name columns!', 'error'); return; }
+  if (!lat || !lng || !name) { showStatus('⚠️ Please select Latitude, Longitude and Name columns!', 'error'); return; }
   try {
     showStatus('⏳ Converting to KML...', 'loading');
     const formData = new FormData();
