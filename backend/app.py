@@ -4,9 +4,39 @@ import io
 import os
 
 app = Flask(__name__)
-CORS(app, resources={r"/*": {"origins": "*"}})
-@app.route('/convert', methods=['POST'])
+CORS(app, origins="*", allow_headers="*", methods=["GET", "POST", "OPTIONS"])
+
+@app.after_request
+def after_request(response):
+    response.headers.add('Access-Control-Allow-Origin', '*')
+    response.headers.add('Access-Control-Allow-Headers', 'Content-Type')
+    response.headers.add('Access-Control-Allow-Methods', 'GET, POST, OPTIONS')
+    return response
+
+@app.route('/csv-columns', methods=['POST', 'OPTIONS'])
+def get_columns():
+    if request.method == 'OPTIONS':
+        return jsonify({'ok': True})
+    import csv
+    file = request.files['file']
+    filename = file.filename.lower()
+    if filename.endswith('.csv'):
+        content = file.read().decode('utf-8').splitlines()
+        reader = csv.DictReader(content)
+        columns = list(reader.fieldnames)
+    elif filename.endswith('.xlsx'):
+        import openpyxl
+        wb = openpyxl.load_workbook(file)
+        ws = wb.active
+        columns = [cell.value for cell in ws[1]]
+    else:
+        return jsonify({'error': 'Unsupported file'}), 400
+    return jsonify({'columns': list(columns)})
+
+@app.route('/convert', methods=['POST', 'OPTIONS'])
 def convert():
+    if request.method == 'OPTIONS':
+        return jsonify({'ok': True})
     file = request.files['file']
     target_format = request.form['format']
     filename = file.filename.lower()
@@ -64,8 +94,10 @@ def convert():
         return jsonify({'error': 'Conversion not supported yet'}), 400
 
 
-@app.route('/pdf/merge', methods=['POST'])
+@app.route('/pdf/merge', methods=['POST', 'OPTIONS'])
 def merge_pdf():
+    if request.method == 'OPTIONS':
+        return jsonify({'ok': True})
     from PyPDF2 import PdfMerger
     files = request.files.getlist('files')
     merger = PdfMerger()
@@ -78,8 +110,10 @@ def merge_pdf():
     return send_file(buffer, mimetype='application/pdf', as_attachment=True, download_name='merged.pdf')
 
 
-@app.route('/pdf/split', methods=['POST'])
+@app.route('/pdf/split', methods=['POST', 'OPTIONS'])
 def split_pdf():
+    if request.method == 'OPTIONS':
+        return jsonify({'ok': True})
     from PyPDF2 import PdfReader, PdfWriter
     import zipfile
     file = request.files['file']
@@ -97,8 +131,10 @@ def split_pdf():
     return send_file(zip_buffer, mimetype='application/zip', as_attachment=True, download_name='split_pages.zip')
 
 
-@app.route('/pdf/protect', methods=['POST'])
+@app.route('/pdf/protect', methods=['POST', 'OPTIONS'])
 def protect_pdf():
+    if request.method == 'OPTIONS':
+        return jsonify({'ok': True})
     from PyPDF2 import PdfReader, PdfWriter
     file = request.files['file']
     password = request.form['password']
@@ -113,8 +149,10 @@ def protect_pdf():
     return send_file(buffer, mimetype='application/pdf', as_attachment=True, download_name='protected.pdf')
 
 
-@app.route('/pdf/unlock', methods=['POST'])
+@app.route('/pdf/unlock', methods=['POST', 'OPTIONS'])
 def unlock_pdf():
+    if request.method == 'OPTIONS':
+        return jsonify({'ok': True})
     from PyPDF2 import PdfReader, PdfWriter
     file = request.files['file']
     password = request.form['password']
@@ -130,8 +168,10 @@ def unlock_pdf():
     return send_file(buffer, mimetype='application/pdf', as_attachment=True, download_name='unlocked.pdf')
 
 
-@app.route('/pdf/pagenumbers', methods=['POST'])
+@app.route('/pdf/pagenumbers', methods=['POST', 'OPTIONS'])
 def add_page_numbers():
+    if request.method == 'OPTIONS':
+        return jsonify({'ok': True})
     from PyPDF2 import PdfReader, PdfWriter
     from reportlab.pdfgen import canvas as pdf_canvas
     from reportlab.lib.pagesizes import letter
@@ -155,27 +195,10 @@ def add_page_numbers():
     return send_file(buffer, mimetype='application/pdf', as_attachment=True, download_name='numbered.pdf')
 
 
-@app.route('/csv-columns', methods=['POST'])
-def get_columns():
-    import csv
-    file = request.files['file']
-    filename = file.filename.lower()
-    if filename.endswith('.csv'):
-        content = file.read().decode('utf-8').splitlines()
-        reader = csv.DictReader(content)
-        columns = list(reader.fieldnames)
-    elif filename.endswith('.xlsx'):
-        import openpyxl
-        wb = openpyxl.load_workbook(file)
-        ws = wb.active
-        columns = [cell.value for cell in ws[1]]
-    else:
-        return jsonify({'error': 'Unsupported file'}), 400
-    return jsonify({'columns': list(columns)})
-
-
-@app.route('/csv-to-kml', methods=['POST'])
+@app.route('/csv-to-kml', methods=['POST', 'OPTIONS'])
 def csv_to_kml():
+    if request.method == 'OPTIONS':
+        return jsonify({'ok': True})
     import csv
     file = request.files['file']
     lat_col = request.form['lat']
@@ -214,26 +237,21 @@ def csv_to_kml():
     return send_file(io.BytesIO(kml_content.encode()), mimetype='application/vnd.google-earth.kml+xml', as_attachment=True, download_name='output.kml')
 
 
-@app.route('/remove-bg', methods=['POST'])
+@app.route('/remove-bg', methods=['POST', 'OPTIONS'])
 def remove_bg():
+    if request.method == 'OPTIONS':
+        return jsonify({'ok': True})
     from rembg import remove
     from PIL import Image, ImageFilter, ImageEnhance
     file = request.files['file']
     img = Image.open(file).convert('RGBA')
-
-    # Remove background
     result = remove(img)
-
-    # Enhance edges for cleaner result
     r, g, b, a = result.split()
     a = a.filter(ImageFilter.SMOOTH_MORE)
     a = a.filter(ImageFilter.SMOOTH_MORE)
     result = Image.merge('RGBA', (r, g, b, a))
-
-    # Sharpen the subject slightly
     enhancer = ImageEnhance.Sharpness(result)
     result = enhancer.enhance(1.5)
-
     buffer = io.BytesIO()
     result.save(buffer, format='PNG')
     buffer.seek(0)
