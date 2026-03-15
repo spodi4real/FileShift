@@ -4,8 +4,7 @@ import io
 import os
 
 app = Flask(__name__)
-CORS(app)
-
+CORS(app, resources={r"/*": {"origins": "*"}})
 @app.route('/convert', methods=['POST'])
 def convert():
     file = request.files['file']
