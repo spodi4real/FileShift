@@ -1,71 +1,152 @@
-from flask import Flask, request, send_file, jsonify, make_response
-import io
+var BACKEND = 'https://fileshift.onrender.com';
 
-app = Flask(__name__)
+function toast(message, type) {
+  if (!type) type = 'loading';
+  var t = document.getElementById('statusToast');
+  t.textContent = message;
+  t.className = 'toast ' + type;
+  t.classList.add('show');
+  if (type !== 'loading') {
+    setTimeout(function() { t.classList.remove('show'); }, 3500);
+  }
+}
 
-@app.after_request
-def after_request(response):
-    response.headers['Access-Control-Allow-Origin'] = '*'
-    response.headers['Access-Control-Allow-Methods'] = 'GET, POST, OPTIONS'
-    response.headers['Access-Control-Allow-Headers'] = 'Content-Type'
-    return response
+function download(blob, filename) {
+  var url = URL.createObjectURL(blob);
+  var a = document.createElement('a');
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  setTimeout(function() { URL.revokeObjectURL(url); }, 1000);
+}
 
-@app.before_request
-def handle_options():
-    from flask import request
-    if request.method == 'OPTIONS':
-        r = make_response()
-        r.headers['Access-Control-Allow-Origin'] = '*'
-        r.headers['Access-Control-Allow-Methods'] = 'GET, POST, OPTIONS'
-        r.headers['Access-Control-Allow-Headers'] = 'Content-Type'
-        return r
+window.addEventListener('load', function() {
 
-@app.route('/')
-def home():
-    return jsonify({'status': 'FileShift backend is running!'})
+  var dropZone = document.getElementById('dropZone');
+  var fileInput = document.getElementById('fileInput');
 
-@app.route('/convert', methods=['POST', 'OPTIONS'])
-def convert():
-    file = request.files['file']
-    target_format = request.form['format']
-    filename = file.filename.lower()
+  dropZone.addEventListener('click', function() {
+    fileInput.click();
+  });
 
-    if filename.endswith('.docx') and target_format == 'pdf':
-        from docx2pdf import convert
-        import tempfile, os
-        tmp_in = tempfile.NamedTemporaryFile(delete=False, suffix='.docx')
-        tmp_out = tempfile.NamedTemporaryFile(delete=False, suffix='.pdf')
-        file.save(tmp_in.name)
-        convert(tmp_in.name, tmp_out.name)
-        with open(tmp_out.name, 'rb') as f:
-            data = f.read()
-        os.unlink(tmp_in.name)
-        os.unlink(tmp_out.name)
-        return send_file(io.BytesIO(data),
-            mimetype='application/pdf',
-            as_attachment=True,
-            download_name='converted.pdf')
+  dropZone.addEventListener('dragover', function(e) {
+    e.preventDefault();
+    dropZone.classList.add('dragover');
+  });
 
-    elif filename.endswith('.pdf') and target_format == 'docx':
-        from pdf2docx import Converter
-        import tempfile, os
-        tmp_in = tempfile.NamedTemporaryFile(delete=False, suffix='.pdf')
-        tmp_out = tempfile.NamedTemporaryFile(delete=False, suffix='.docx')
-        file.save(tmp_in.name)
-        cv = Converter(tmp_in.name)
-        cv.convert(tmp_out.name)
-        cv.close()
-        with open(tmp_out.name, 'rb') as f:
-            data = f.read()
-        os.unlink(tmp_in.name)
-        os.unlink(tmp_out.name)
-        return send_file(io.BytesIO(data),
-            mimetype='application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-            as_attachment=True,
-            download_name='converted.docx')
+  dropZone.addEventListener('dragleave', function() {
+    dropZone.classList.remove('dragover');
+  });
 
-    else:
-        return jsonify({'error': 'Unsupported conversion'}), 400
+  dropZone.addEventListener('drop', function(e) {
+    e.preventDefault();
+    dropZone.classList.remove('dragover');
+    var file = e.dataTransfer.files[0];
+    if (file) onFileSelected(file);
+  });
 
-if __name__ == '__main__':
-    app.run(debug=True)
+  fileInput.addEventListener('change', function() {
+    if (fileInput.files && fileInput.files[0]) {
+      onFileSelected(fileInput.files[0]);
+    }
+  });
+
+});
+
+function onFileSelected(file) {
+  document.getElementById('fileName').textContent = '✅ ' + file.name;
+  var name = file.name.toLowerCase();
+  var formatSelect = document.getElementById('formatSelect');
+  formatSelect.innerHTML = '';
+  var formats = [];
+
+  if (name.endsWith('.docx')) {
+    formats = ['PDF'];
+  } else if (name.endsWith('.pdf')) {
+    formats = ['DOCX'];
+  } else if (name.endsWith('.mp4')) {
+    formats = ['MP3'];
+  } else if (name.endsWith('.mp3')) {
+    formats = ['WAV'];
+  } else if (name.endsWith('.wav')) {
+    formats = ['MP3'];
+  } else {
+    toast('Unsupported file type!', 'error');
+    return;
+  }
+
+  formats.forEach(function(fmt) {
+    var opt = document.createElement('option');
+    opt.value = fmt.toLowerCase();
+    opt.textContent = fmt;
+    formatSelect.appendChild(opt);
+  });
+
+  document.getElementById('convertRow').style.display = 'flex';
+}
+
+function handleConvert() {
+  var fileInput = document.getElementById('fileInput');
+  var file = fileInput.files[0];
+  var format = document.getElementById('formatSelect').value;
+
+  if (!file) { toast('Please upload a file first!', 'error'); return; }
+  if (!format) { toast('Please select a format!', 'error'); return; }
+
+  var name = file.name.toLowerCase();
+
+  if (name.endsWith('.mp4') || name.endsWith('.mp3') || name.endsWith('.wav')) {
+    convertAudio(file, format);
+  } else {
+    convertDocument(file, format);
+  }
+}
+
+function convertAudio(file, format) {
+  toast('Loading audio converter...', 'loading');
+  var createFFmpeg = FFmpeg.createFFmpeg;
+  var fetchFile = FFmpeg.fetchFile;
+  var ffmpeg = createFFmpeg({ log: false });
+
+  ffmpeg.load().then(function() {
+    var inputName = 'input.' + file.name.split('.').pop();
+    var outputName = 'output.' + format;
+    return fetchFile(file).then(function(data) {
+      ffmpeg.FS('writeFile', inputName, data);
+      return ffmpeg.run('-i', inputName, outputName);
+    }).then(function() {
+      var data = ffmpeg.FS('readFile', outputName);
+      var blob = new Blob([data.buffer], { type: 'audio/' + format });
+      download(blob, 'fileshift-converted.' + format);
+      toast('Converted successfully!', 'success');
+    });
+  }).catch(function(err) {
+    toast('Error: ' + err.message, 'error');
+  });
+}
+
+function convertDocument(file, format) {
+  toast('Converting... please wait!', 'loading');
+  var formData = new FormData();
+  formData.append('file', file);
+  formData.append('format', format);
+
+  fetch(BACKEND + '/convert', {
+    method: 'POST',
+    body: formData
+  }).then(function(response) {
+    if (!response.ok) {
+      return response.json().then(function(err) {
+        throw new Error(err.error || 'Conversion failed');
+      });
+    }
+    return response.blob();
+  }).then(function(blob) {
+    download(blob, 'fileshift-converted.' + format);
+    toast('Converted successfully!', 'success');
+  }).catch(function(err) {
+    toast('Error: ' + err.message, 'error');
+  });
+}
