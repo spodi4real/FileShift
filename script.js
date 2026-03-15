@@ -1,6 +1,5 @@
-const BACKEND = 'https://fileshift-production.up.railway.app';
+var BACKEND = 'https://fileshift-production.up.railway.app';
 
-// ── TOAST ──────────────────────────────────────────────────────
 function toast(message, type) {
   type = type || 'loading';
   var t = document.getElementById('statusToast');
@@ -12,7 +11,6 @@ function toast(message, type) {
   }
 }
 
-// ── NAVIGATION ─────────────────────────────────────────────────
 function showHero() {
   document.getElementById('hero').style.display = 'flex';
   document.querySelectorAll('.section').forEach(function(s) {
@@ -30,14 +28,15 @@ function showSection(id) {
 }
 
 function showTab(id) {
-  var section = document.getElementById('tab-' + id).closest('.section');
+  var tabEl = document.getElementById('tab-' + id);
+  var section = tabEl.closest('.section');
   section.querySelectorAll('.tab-content').forEach(function(t) {
     t.classList.remove('active');
   });
   section.querySelectorAll('.tab').forEach(function(t) {
     t.classList.remove('active');
   });
-  document.getElementById('tab-' + id).classList.add('active');
+  tabEl.classList.add('active');
   section.querySelectorAll('.tab').forEach(function(t) {
     var onclick = t.getAttribute('onclick') || '';
     if (onclick.indexOf("'" + id + "'") !== -1) {
@@ -63,7 +62,6 @@ function showImageTab(id) {
   });
 }
 
-// ── DOWNLOAD HELPER ────────────────────────────────────────────
 function download(blob, filename) {
   var url = URL.createObjectURL(blob);
   var a = document.createElement('a');
@@ -73,7 +71,6 @@ function download(blob, filename) {
   setTimeout(function() { URL.revokeObjectURL(url); }, 1000);
 }
 
-// ── BACKEND HELPER ─────────────────────────────────────────────
 async function postToBackend(endpoint, formData) {
   var response = await fetch(BACKEND + endpoint, {
     method: 'POST',
@@ -86,7 +83,6 @@ async function postToBackend(endpoint, formData) {
   return await response.blob();
 }
 
-// ── DROP ZONES ─────────────────────────────────────────────────
 function setupDropZone(dropId, inputId, labelId, onFile) {
   var drop = document.getElementById(dropId);
   var input = document.getElementById(inputId);
@@ -107,8 +103,7 @@ function setupDropZone(dropId, inputId, labelId, onFile) {
     drop.classList.remove('dragover');
     var file = e.dataTransfer.files[0];
     if (file) {
-      var dt = e.dataTransfer;
-      try { input.files = dt.files; } catch(err) {}
+      try { input.files = e.dataTransfer.files; } catch(err) {}
       if (labelId) document.getElementById(labelId).textContent = '✅ ' + file.name;
       if (onFile) onFile(file);
     }
@@ -123,7 +118,7 @@ function setupDropZone(dropId, inputId, labelId, onFile) {
   });
 }
 
-// ── FILE CONVERTER ─────────────────────────────────────────────
+// FILE CONVERTER
 setupDropZone('converterDrop', 'converterInput', 'converterFileName', function(file) {
   var name = file.name.toLowerCase();
   var formatSelect = document.getElementById('formatSelect');
@@ -156,6 +151,7 @@ async function handleConvert() {
   var format = document.getElementById('formatSelect').value;
   if (!file || !format) { toast('Please upload a file and select a format!', 'error'); return; }
   var name = file.name.toLowerCase();
+
   if (name.match(/\.(jpg|jpeg|png|webp|gif|bmp)$/)) {
     convertImage(file, format);
   } else if (name.match(/\.(mp3|wav|aac|flac|ogg)$/)) {
@@ -197,9 +193,8 @@ function convertImage(file, format) {
 async function convertAudio(file, format) {
   toast('Loading audio converter...', 'loading');
   try {
-    var FFmpegObj = FFmpeg;
-    var createFFmpeg = FFmpegObj.createFFmpeg;
-    var fetchFile = FFmpegObj.fetchFile;
+    var createFFmpeg = FFmpeg.createFFmpeg;
+    var fetchFile = FFmpeg.fetchFile;
     var ffmpeg = createFFmpeg({ log: false });
     await ffmpeg.load();
     var inputName = 'input.' + file.name.split('.').pop();
@@ -213,7 +208,7 @@ async function convertAudio(file, format) {
   } catch(err) { toast(err.message, 'error'); }
 }
 
-// ── PDF TOOLS ──────────────────────────────────────────────────
+// PDF TOOLS
 setupDropZone('mergeDrop', 'mergeInput', null, function() {
   var files = document.getElementById('mergeInput').files;
   var list = document.getElementById('mergeFileList');
@@ -331,7 +326,7 @@ async function imageToPDF() {
   } catch(err) { toast(err.message, 'error'); }
 }
 
-// ── MEDIA DOWNLOADER ───────────────────────────────────────────
+// MEDIA DOWNLOADER
 async function fetchMediaInfo() {
   var url = document.getElementById('mediaUrl').value.trim();
   if (!url) { toast('Paste a video URL first!', 'error'); return; }
@@ -370,7 +365,7 @@ async function downloadMedia() {
   } catch(err) { toast(err.message, 'error'); }
 }
 
-// ── REMOVE BACKGROUND ──────────────────────────────────────────
+// REMOVE BACKGROUND
 var removedBgBlob = null;
 
 setupDropZone('removeBgDrop', 'removeBgInput', 'removeBgFileName', function(file) {
@@ -402,7 +397,7 @@ function downloadRemovedBg() {
   if (removedBgBlob) download(removedBgBlob, 'no-background.png');
 }
 
-// ── CROP IMAGE ─────────────────────────────────────────────────
+// CROP IMAGE
 var cropImg = null;
 var cropRect = { x: 0, y: 0, w: 0, h: 0 };
 var dragging = null;
@@ -531,42 +526,8 @@ function cropImage() {
   });
 }
 
-// ── CSV TO KML ─────────────────────────────────────────────────
-setupDropZone('kmlDrop', 'kmlInput', 'kmlFileName', async function(file) {
-  try {
-    toast('Reading columns...', 'loading');
-    var formData = new FormData();
-    formData.append('file', file);
-    var response = await fetch(BACKEND + '/csv-columns', { method: 'POST', body: formData });
-    var data = await response.json();
-    var columns = data.columns;
-
-    ['kmlLat', 'kmlLng', 'kmlName'].forEach(function(id) {
-      var select = document.getElementById(id);
-      select.innerHTML = '';
-      columns.forEach(function(col) {
-        var opt = document.createElement('option');
-        opt.value = col;
-        opt.textContent = col;
-        select.appendChild(opt);
-      });
-    });
-
-    var descSelect = document.getElementById('kmlDesc');
-    descSelect.innerHTML = '<option value="">-- None --</option>';
-    columns.forEach(function(col) {
-      var opt = document.createElement('option');
-      opt.value = col;
-      opt.textContent = col;
-      descSelect.appendChild(opt);
-    });
-
-    document.getElementById('kmlFields').style.display = 'block';
-    toast('Columns detected!', 'success');
-  } catch(err) {
-    toast('Could not read columns: ' + err.message, 'error');
-  }
-});
+// CSV TO KML
+setupDropZone('kmlDrop', 'kmlInput', 'kmlFileName', null);
 
 async function convertToKML() {
   var file = document.getElementById('kmlInput').files[0];
@@ -575,6 +536,7 @@ async function convertToKML() {
   var name = document.getElementById('kmlName').value;
   var desc = document.getElementById('kmlDesc').value;
   if (!file) { toast('Upload a file first!', 'error'); return; }
+  if (!lat || !lng || !name) { toast('Please fill in Latitude, Longitude and Name!', 'error'); return; }
   try {
     toast('Converting to KML...', 'loading');
     var formData = new FormData();

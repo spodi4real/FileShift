@@ -313,39 +313,23 @@
       </section>
 
       <!-- KML -->
-      <section class="section" id="section-kml">
-        <div class="section-header">
-          <button class="back-btn" onclick="showHero()">
-            <i class="fa-solid fa-arrow-left"></i> Back
-          </button>
-          <h2><i class="fa-solid fa-map-location-dot"></i> CSV / XLSX to KML</h2>
-          <p>Convert spreadsheet data into Google Earth KML files</p>
-        </div>
-        <div class="drop-zone" id="kmlDrop">
-          <input type="file" id="kmlInput" accept=".csv,.xlsx" hidden />
-          <i class="fa-solid fa-cloud-arrow-up drop-icon"></i>
-          <p class="drop-text">Drag & drop your CSV or XLSX or <span class="browse">browse</span></p>
-          <p class="drop-sub" id="kmlFileName">Columns will be auto-detected</p>
-        </div>
-        <div id="kmlFields" style="display:none;">
+<div id="kmlFields" style="display:block; margin-top:16px;">
           <div class="kml-grid">
             <div class="kml-field">
-              <label>Latitude column</label>
-              <select id="kmlLat" class="text-input"></select>
+              <label>Latitude column name</label>
+              <input type="text" id="kmlLat" class="text-input" placeholder="e.g. lat" />
             </div>
             <div class="kml-field">
-              <label>Longitude column</label>
-              <select id="kmlLng" class="text-input"></select>
+              <label>Longitude column name</label>
+              <input type="text" id="kmlLng" class="text-input" placeholder="e.g. lng" />
             </div>
             <div class="kml-field">
-              <label>Name column</label>
-              <select id="kmlName" class="text-input"></select>
+              <label>Name column name</label>
+              <input type="text" id="kmlName" class="text-input" placeholder="e.g. name" />
             </div>
             <div class="kml-field">
-              <label>Description (optional)</label>
-              <select id="kmlDesc" class="text-input">
-                <option value="">-- None --</option>
-              </select>
+              <label>Description column (optional)</label>
+              <input type="text" id="kmlDesc" class="text-input" placeholder="e.g. description" />
             </div>
           </div>
           <button class="btn-primary" onclick="convertToKML()">
