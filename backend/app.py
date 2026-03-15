@@ -1,22 +1,33 @@
-from flask import Flask, request, send_file, jsonify
-from flask_cors import CORS
+from flask import Flask, request, send_file, jsonify, make_response
 import io
 import os
 
 app = Flask(__name__)
-CORS(app, origins="*", allow_headers="*", methods=["GET", "POST", "OPTIONS"])
+
+def add_cors(response):
+    response.headers['Access-Control-Allow-Origin'] = '*'
+    response.headers['Access-Control-Allow-Methods'] = 'GET, POST, OPTIONS'
+    response.headers['Access-Control-Allow-Headers'] = 'Content-Type, Authorization'
+    return response
+
+@app.before_request
+def handle_options():
+    if request.method == 'OPTIONS':
+        response = make_response()
+        response.headers['Access-Control-Allow-Origin'] = '*'
+        response.headers['Access-Control-Allow-Methods'] = 'GET, POST, OPTIONS'
+        response.headers['Access-Control-Allow-Headers'] = 'Content-Type, Authorization'
+        return response
 
 @app.after_request
 def after_request(response):
-    response.headers.add('Access-Control-Allow-Origin', '*')
-    response.headers.add('Access-Control-Allow-Headers', 'Content-Type')
-    response.headers.add('Access-Control-Allow-Methods', 'GET, POST, OPTIONS')
+    response.headers['Access-Control-Allow-Origin'] = '*'
+    response.headers['Access-Control-Allow-Methods'] = 'GET, POST, OPTIONS'
+    response.headers['Access-Control-Allow-Headers'] = 'Content-Type, Authorization'
     return response
 
 @app.route('/csv-columns', methods=['POST', 'OPTIONS'])
 def get_columns():
-    if request.method == 'OPTIONS':
-        return jsonify({'ok': True})
     import csv
     file = request.files['file']
     filename = file.filename.lower()
@@ -30,13 +41,11 @@ def get_columns():
         ws = wb.active
         columns = [cell.value for cell in ws[1]]
     else:
-        return jsonify({'error': 'Unsupported file'}), 400
-    return jsonify({'columns': list(columns)})
+        return add_cors(make_response(jsonify({'error': 'Unsupported file'}), 400))
+    return add_cors(make_response(jsonify({'columns': list(columns)})))
 
 @app.route('/convert', methods=['POST', 'OPTIONS'])
 def convert():
-    if request.method == 'OPTIONS':
-        return jsonify({'ok': True})
     file = request.files['file']
     target_format = request.form['format']
     filename = file.filename.lower()
@@ -44,17 +53,17 @@ def convert():
     if filename.endswith('.txt') and target_format == 'html':
         content = file.read().decode('utf-8')
         result = '<html><body><pre>' + content + '</pre></body></html>'
-        return send_file(io.BytesIO(result.encode()), mimetype='text/html', as_attachment=True, download_name='converted.html')
+        return add_cors(make_response(send_file(io.BytesIO(result.encode()), mimetype='text/html', as_attachment=True, download_name='converted.html')))
 
     elif filename.endswith('.html') and target_format == 'txt':
         content = file.read().decode('utf-8')
-        return send_file(io.BytesIO(content.encode()), mimetype='text/plain', as_attachment=True, download_name='converted.txt')
+        return add_cors(make_response(send_file(io.BytesIO(content.encode()), mimetype='text/plain', as_attachment=True, download_name='converted.txt')))
 
     elif filename.endswith('.md') and target_format == 'html':
         import markdown
         content = file.read().decode('utf-8')
         result = markdown.markdown(content)
-        return send_file(io.BytesIO(result.encode()), mimetype='text/html', as_attachment=True, download_name='converted.html')
+        return add_cors(make_response(send_file(io.BytesIO(result.encode()), mimetype='text/html', as_attachment=True, download_name='converted.html')))
 
     elif filename.endswith('.txt') and target_format == 'pdf':
         from reportlab.pdfgen import canvas as pdf_canvas
@@ -70,7 +79,7 @@ def convert():
                 y = 750
         c.save()
         buffer.seek(0)
-        return send_file(buffer, mimetype='application/pdf', as_attachment=True, download_name='converted.pdf')
+        return add_cors(make_response(send_file(buffer, mimetype='application/pdf', as_attachment=True, download_name='converted.pdf')))
 
     elif filename.endswith('.docx') and target_format == 'pdf':
         from docx2pdf import convert
@@ -79,7 +88,7 @@ def convert():
         tmp_out = tempfile.NamedTemporaryFile(delete=False, suffix='.pdf')
         file.save(tmp_in.name)
         convert(tmp_in.name, tmp_out.name)
-        return send_file(tmp_out.name, mimetype='application/pdf', as_attachment=True, download_name='converted.pdf')
+        return add_cors(make_response(send_file(tmp_out.name, mimetype='application/pdf', as_attachment=True, download_name='converted.pdf')))
 
     elif (filename.endswith('.jpg') or filename.endswith('.jpeg') or filename.endswith('.png')) and target_format == 'pdf':
         from PIL import Image
@@ -88,16 +97,14 @@ def convert():
         buffer = io.BytesIO()
         img.save(buffer, format='PDF')
         buffer.seek(0)
-        return send_file(buffer, mimetype='application/pdf', as_attachment=True, download_name='converted.pdf')
+        return add_cors(make_response(send_file(buffer, mimetype='application/pdf', as_attachment=True, download_name='converted.pdf')))
 
     else:
-        return jsonify({'error': 'Conversion not supported yet'}), 400
+        return add_cors(make_response(jsonify({'error': 'Conversion not supported yet'}), 400))
 
 
 @app.route('/pdf/merge', methods=['POST', 'OPTIONS'])
 def merge_pdf():
-    if request.method == 'OPTIONS':
-        return jsonify({'ok': True})
     from PyPDF2 import PdfMerger
     files = request.files.getlist('files')
     merger = PdfMerger()
@@ -107,13 +114,11 @@ def merge_pdf():
     merger.write(buffer)
     merger.close()
     buffer.seek(0)
-    return send_file(buffer, mimetype='application/pdf', as_attachment=True, download_name='merged.pdf')
+    return add_cors(make_response(send_file(buffer, mimetype='application/pdf', as_attachment=True, download_name='merged.pdf')))
 
 
 @app.route('/pdf/split', methods=['POST', 'OPTIONS'])
 def split_pdf():
-    if request.method == 'OPTIONS':
-        return jsonify({'ok': True})
     from PyPDF2 import PdfReader, PdfWriter
     import zipfile
     file = request.files['file']
@@ -128,13 +133,11 @@ def split_pdf():
             page_buffer.seek(0)
             zf.writestr(f'page_{i+1}.pdf', page_buffer.read())
     zip_buffer.seek(0)
-    return send_file(zip_buffer, mimetype='application/zip', as_attachment=True, download_name='split_pages.zip')
+    return add_cors(make_response(send_file(zip_buffer, mimetype='application/zip', as_attachment=True, download_name='split_pages.zip')))
 
 
 @app.route('/pdf/protect', methods=['POST', 'OPTIONS'])
 def protect_pdf():
-    if request.method == 'OPTIONS':
-        return jsonify({'ok': True})
     from PyPDF2 import PdfReader, PdfWriter
     file = request.files['file']
     password = request.form['password']
@@ -146,13 +149,11 @@ def protect_pdf():
     buffer = io.BytesIO()
     writer.write(buffer)
     buffer.seek(0)
-    return send_file(buffer, mimetype='application/pdf', as_attachment=True, download_name='protected.pdf')
+    return add_cors(make_response(send_file(buffer, mimetype='application/pdf', as_attachment=True, download_name='protected.pdf')))
 
 
 @app.route('/pdf/unlock', methods=['POST', 'OPTIONS'])
 def unlock_pdf():
-    if request.method == 'OPTIONS':
-        return jsonify({'ok': True})
     from PyPDF2 import PdfReader, PdfWriter
     file = request.files['file']
     password = request.form['password']
@@ -165,13 +166,11 @@ def unlock_pdf():
     buffer = io.BytesIO()
     writer.write(buffer)
     buffer.seek(0)
-    return send_file(buffer, mimetype='application/pdf', as_attachment=True, download_name='unlocked.pdf')
+    return add_cors(make_response(send_file(buffer, mimetype='application/pdf', as_attachment=True, download_name='unlocked.pdf')))
 
 
 @app.route('/pdf/pagenumbers', methods=['POST', 'OPTIONS'])
 def add_page_numbers():
-    if request.method == 'OPTIONS':
-        return jsonify({'ok': True})
     from PyPDF2 import PdfReader, PdfWriter
     from reportlab.pdfgen import canvas as pdf_canvas
     from reportlab.lib.pagesizes import letter
@@ -192,13 +191,11 @@ def add_page_numbers():
     buffer = io.BytesIO()
     writer.write(buffer)
     buffer.seek(0)
-    return send_file(buffer, mimetype='application/pdf', as_attachment=True, download_name='numbered.pdf')
+    return add_cors(make_response(send_file(buffer, mimetype='application/pdf', as_attachment=True, download_name='numbered.pdf')))
 
 
 @app.route('/csv-to-kml', methods=['POST', 'OPTIONS'])
 def csv_to_kml():
-    if request.method == 'OPTIONS':
-        return jsonify({'ok': True})
     import csv
     file = request.files['file']
     lat_col = request.form['lat']
@@ -234,13 +231,11 @@ def csv_to_kml():
 </Placemark>''')
     kml_lines.append('</Document></kml>')
     kml_content = '\n'.join(kml_lines)
-    return send_file(io.BytesIO(kml_content.encode()), mimetype='application/vnd.google-earth.kml+xml', as_attachment=True, download_name='output.kml')
+    return add_cors(make_response(send_file(io.BytesIO(kml_content.encode()), mimetype='application/vnd.google-earth.kml+xml', as_attachment=True, download_name='output.kml')))
 
 
 @app.route('/remove-bg', methods=['POST', 'OPTIONS'])
 def remove_bg():
-    if request.method == 'OPTIONS':
-        return jsonify({'ok': True})
     from rembg import remove
     from PIL import Image, ImageFilter, ImageEnhance
     file = request.files['file']
@@ -255,7 +250,7 @@ def remove_bg():
     buffer = io.BytesIO()
     result.save(buffer, format='PNG')
     buffer.seek(0)
-    return send_file(buffer, mimetype='image/png', as_attachment=True, download_name='no-background.png')
+    return add_cors(make_response(send_file(buffer, mimetype='image/png', as_attachment=True, download_name='no-background.png')))
 
 
 if __name__ == '__main__':
