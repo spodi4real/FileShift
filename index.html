@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>FileShift</title>
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <div class="container">
+      <h1>⚡ FileShift</h1>
+      <p>Convert images, documents, and audio files — free & fast</p>
+
+      <div class="upload-box" onclick="document.getElementById('fileInput').click()">
+        <input type="file" id="fileInput" hidden />
+        <p id="uploadLabel">📁 Click here to upload a file</p>
+      </div>
+
+      <div class="options">
+        <label>Convert to:</label>
+        <select id="formatSelect">
+          <option value="">-- Select format --</option>
+        </select>
+        <button id="convertBtn">Convert File</button>
+      </div>
+
+      <div id="status"></div>
+    </div>
+    <script src="https://unpkg.com/@ffmpeg/ffmpeg@0.11.6/dist/ffmpeg.min.js"></script>
+    <script src="script.js"></script>
+  </body>
+</html>
