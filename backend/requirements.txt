@@ -1,0 +1,7 @@
+flask
+flask-cors
+pypdf2
+python-docx
+markdown
+reportlab
+gunicorn
