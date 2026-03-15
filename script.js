@@ -1,4 +1,4 @@
-var BACKEND = 'https://fileshift-production.up.railway.app';
+var BACKEND = 'https://fileshift.onrender.com';
 
 function toast(message, type) {
   type = type || 'loading';
