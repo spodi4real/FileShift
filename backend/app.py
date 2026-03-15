@@ -43,7 +43,7 @@ def convert():
         buffer.seek(0)
         return send_file(buffer, mimetype='application/pdf', as_attachment=True, download_name='converted.pdf')
 
-    elif (filename.endswith('.docx')) and target_format == 'pdf':
+    elif filename.endswith('.docx') and target_format == 'pdf':
         from docx2pdf import convert
         import tempfile
         tmp_in = tempfile.NamedTemporaryFile(delete=False, suffix='.docx')
@@ -156,6 +156,25 @@ def add_page_numbers():
     return send_file(buffer, mimetype='application/pdf', as_attachment=True, download_name='numbered.pdf')
 
 
+@app.route('/csv-columns', methods=['POST'])
+def get_columns():
+    import csv
+    file = request.files['file']
+    filename = file.filename.lower()
+    if filename.endswith('.csv'):
+        content = file.read().decode('utf-8').splitlines()
+        reader = csv.DictReader(content)
+        columns = list(reader.fieldnames)
+    elif filename.endswith('.xlsx'):
+        import openpyxl
+        wb = openpyxl.load_workbook(file)
+        ws = wb.active
+        columns = [cell.value for cell in ws[1]]
+    else:
+        return jsonify({'error': 'Unsupported file'}), 400
+    return jsonify({'columns': list(columns)})
+
+
 @app.route('/csv-to-kml', methods=['POST'])
 def csv_to_kml():
     import csv
@@ -199,10 +218,23 @@ def csv_to_kml():
 @app.route('/remove-bg', methods=['POST'])
 def remove_bg():
     from rembg import remove
-    from PIL import Image
+    from PIL import Image, ImageFilter, ImageEnhance
     file = request.files['file']
-    img = Image.open(file)
+    img = Image.open(file).convert('RGBA')
+
+    # Remove background
     result = remove(img)
+
+    # Enhance edges for cleaner result
+    r, g, b, a = result.split()
+    a = a.filter(ImageFilter.SMOOTH_MORE)
+    a = a.filter(ImageFilter.SMOOTH_MORE)
+    result = Image.merge('RGBA', (r, g, b, a))
+
+    # Sharpen the subject slightly
+    enhancer = ImageEnhance.Sharpness(result)
+    result = enhancer.enhance(1.5)
+
     buffer = io.BytesIO()
     result.save(buffer, format='PNG')
     buffer.seek(0)
