@@ -1,5 +1,6 @@
 var BACKEND = 'https://fileshift.onrender.com';
 
+// ── TOAST ────────────────────────────────────────────────────
 function toast(message, type) {
   if (!type) type = 'loading';
   var t = document.getElementById('statusToast');
@@ -11,6 +12,36 @@ function toast(message, type) {
   }
 }
 
+// ── NAVIGATION ───────────────────────────────────────────────
+function openTool(id) {
+  var home = document.getElementById('home');
+  var tool = document.getElementById('tool-' + id);
+  home.classList.remove('active');
+  setTimeout(function() {
+    home.style.display = 'none';
+    tool.style.display = 'block';
+    setTimeout(function() { tool.classList.add('active'); }, 10);
+  }, 200);
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function goHome() {
+  var pages = document.querySelectorAll('.page');
+  pages.forEach(function(p) {
+    p.classList.remove('active');
+    setTimeout(function() {
+      p.style.display = 'none';
+    }, 350);
+  });
+  var home = document.getElementById('home');
+  setTimeout(function() {
+    home.style.display = 'block';
+    setTimeout(function() { home.classList.add('active'); }, 10);
+  }, 200);
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+// ── DOWNLOAD ─────────────────────────────────────────────────
 function download(blob, filename) {
   var url = URL.createObjectURL(blob);
   var a = document.createElement('a');
@@ -22,8 +53,8 @@ function download(blob, filename) {
   setTimeout(function() { URL.revokeObjectURL(url); }, 1000);
 }
 
+// ── DROP ZONE ────────────────────────────────────────────────
 window.addEventListener('load', function() {
-
   var dropZone = document.getElementById('dropZone');
   var fileInput = document.getElementById('fileInput');
 
@@ -52,11 +83,10 @@ window.addEventListener('load', function() {
       onFileSelected(fileInput.files[0]);
     }
   });
-
 });
 
+// ── FILE SELECTED ────────────────────────────────────────────
 function onFileSelected(file) {
-  document.getElementById('fileName').textContent = '✅ ' + file.name;
   var name = file.name.toLowerCase();
   var formatSelect = document.getElementById('formatSelect');
   formatSelect.innerHTML = '';
@@ -84,9 +114,11 @@ function onFileSelected(file) {
     formatSelect.appendChild(opt);
   });
 
-  document.getElementById('convertRow').style.display = 'flex';
+  document.getElementById('filePillName').textContent = file.name;
+  document.getElementById('convertRow').style.display = 'block';
 }
 
+// ── CONVERT ──────────────────────────────────────────────────
 function handleConvert() {
   var fileInput = document.getElementById('fileInput');
   var file = fileInput.files[0];

@@ -11,31 +11,125 @@
 
     <nav class="navbar">
       <div class="logo">⚡ FileShift</div>
+      <div class="nav-right">
+        <span class="nav-tag">Free • Fast • Private</span>
+      </div>
     </nav>
 
     <main class="main">
-      <div class="hero">
-        <h1>Your Files.<br/>Your Way.</h1>
-        <p>Convert your files free & fast</p>
 
-        <div class="upload-card">
-          <div class="drop-zone" id="dropZone">
-            <input type="file" id="fileInput" hidden accept=".docx,.pdf,.mp4,.mp3,.wav" />
-            <i class="fa-solid fa-cloud-arrow-up drop-icon"></i>
-            <p class="drop-text">Drag & drop or <span class="browse">browse</span></p>
-            <p class="drop-sub" id="fileName">Supports DOCX, PDF, MP4, MP3, WAV</p>
+      <!-- HOME -->
+      <div id="home" class="page active">
+        <div class="home-hero">
+          <div class="hero-badge">✦ All your file tools in one place</div>
+          <h1>Your Files.<br/><span class="gradient-text">Your Way.</span></h1>
+          <p>Convert, edit, and transform files — free, fast, and private.</p>
+        </div>
+
+        <div class="tools-grid" id="toolsGrid">
+
+          <div class="tool-card" onclick="openTool('converter')">
+            <div class="tool-icon"><i class="fa-solid fa-rotate"></i></div>
+            <div class="tool-info">
+              <h3>File Converter</h3>
+              <p>DOCX, PDF, MP4, MP3, WAV</p>
+            </div>
+            <i class="fa-solid fa-arrow-right tool-arrow"></i>
           </div>
 
-          <div id="convertRow" style="display:none;">
-            <label class="convert-label">Convert to:</label>
-            <select id="formatSelect" class="text-input"></select>
-            <button class="btn-primary" onclick="handleConvert()">
-              <i class="fa-solid fa-bolt"></i> Convert
-            </button>
+          <div class="tool-card coming-soon">
+            <div class="tool-icon"><i class="fa-solid fa-file-pdf"></i></div>
+            <div class="tool-info">
+              <h3>PDF Tools</h3>
+              <p>Merge, split, protect & more</p>
+            </div>
+            <span class="badge">Soon</span>
+          </div>
+
+          <div class="tool-card coming-soon">
+            <div class="tool-icon"><i class="fa-solid fa-wand-magic-sparkles"></i></div>
+            <div class="tool-info">
+              <h3>Remove Background</h3>
+              <p>AI-powered background removal</p>
+            </div>
+            <span class="badge">Soon</span>
+          </div>
+
+          <div class="tool-card coming-soon">
+            <div class="tool-icon"><i class="fa-solid fa-crop-simple"></i></div>
+            <div class="tool-info">
+              <h3>Crop Image</h3>
+              <p>Precise drag-to-crop tool</p>
+            </div>
+            <span class="badge">Soon</span>
+          </div>
+
+          <div class="tool-card coming-soon">
+            <div class="tool-icon"><i class="fa-solid fa-download"></i></div>
+            <div class="tool-info">
+              <h3>Media Downloader</h3>
+              <p>YouTube, TikTok, Instagram</p>
+            </div>
+            <span class="badge">Soon</span>
+          </div>
+
+          <div class="tool-card coming-soon">
+            <div class="tool-icon"><i class="fa-solid fa-map-location-dot"></i></div>
+            <div class="tool-info">
+              <h3>CSV to KML</h3>
+              <p>Convert spreadsheets to maps</p>
+            </div>
+            <span class="badge">Soon</span>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- FILE CONVERTER -->
+      <div id="tool-converter" class="page">
+        <div class="tool-page-header">
+          <button class="back-btn" onclick="goHome()">
+            <i class="fa-solid fa-arrow-left"></i> Back
+          </button>
+          <div class="tool-page-title">
+            <div class="tool-icon-lg"><i class="fa-solid fa-rotate"></i></div>
+            <div>
+              <h2>File Converter</h2>
+              <p>Convert between DOCX, PDF, MP4, MP3 and WAV</p>
+            </div>
           </div>
         </div>
 
+        <div class="converter-card">
+          <div class="drop-zone" id="dropZone">
+            <input type="file" id="fileInput" style="display:none;" accept=".docx,.pdf,.mp4,.mp3,.wav" />
+            <div class="drop-content">
+              <div class="drop-icon-wrap">
+                <i class="fa-solid fa-cloud-arrow-up"></i>
+              </div>
+              <p class="drop-title">Drop your file here</p>
+              <p class="drop-sub">or <span class="browse-link">browse files</span></p>
+              <p class="drop-formats" id="fileName">DOCX · PDF · MP4 · MP3 · WAV</p>
+            </div>
+          </div>
+
+          <div id="convertRow" class="convert-row" style="display:none;">
+            <div class="convert-row-inner">
+              <div class="file-pill" id="filePill">
+                <i class="fa-solid fa-file"></i>
+                <span id="filePillName"></span>
+              </div>
+              <i class="fa-solid fa-arrow-right convert-arrow"></i>
+              <select id="formatSelect" class="format-select"></select>
+              <button class="btn-convert" onclick="handleConvert()">
+                <i class="fa-solid fa-bolt"></i>
+                Convert
+              </button>
+            </div>
+          </div>
+        </div>
       </div>
+
     </main>
 
     <div id="statusToast" class="toast"></div>
