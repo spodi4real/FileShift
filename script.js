@@ -20,44 +20,30 @@ function showProgressBar() {
 function hideProgressBar() {
   var bar = document.getElementById('progressBar');
   bar.classList.remove('loading');
-  bar.style.width = '100%';
-  setTimeout(function() {
-    bar.style.width = '0%';
-  }, 300);
 }
 
 // ── TOAST ────────────────────────────────────────────────────
 function toast(message, type) {
   if (!type) type = 'loading';
-  var toast = document.getElementById('xpToast');
+  var t = document.getElementById('xpToast');
   var msg = document.getElementById('xpToastMsg');
   var face = document.getElementById('xpToastFace');
   var title = document.getElementById('xpToastTitle');
-
   msg.textContent = message;
-
   if (type === 'success') {
     face.src = 'face-success.png';
     title.textContent = 'Success!';
   } else if (type === 'error') {
     face.src = 'face-error.png';
-    title.textContent = 'Error!';
+    title.textContent = 'Oops!';
   } else {
     face.src = 'loading-circle.gif';
     title.textContent = 'Please wait...';
   }
-
-  toast.style.display = 'block';
-
+  t.style.display = 'block';
   if (type !== 'loading') {
-    setTimeout(function() {
-      toast.style.display = 'none';
-    }, 4000);
+    setTimeout(function() { t.style.display = 'none'; }, 4000);
   }
-}
-
-function hideToast() {
-  document.getElementById('xpToast').style.display = 'none';
 }
 
 // ── DOWNLOAD ─────────────────────────────────────────────────
@@ -72,15 +58,14 @@ function download(blob, filename) {
   setTimeout(function() { URL.revokeObjectURL(url); }, 1000);
 }
 
-// ── WINDOW MANAGEMENT ─────────────────────────────────────────
+// ── WINDOW MANAGEMENT ────────────────────────────────────────
 var zCounter = 200;
-var minimizedWindows = {};
 
 function openTool(id) {
   var win = document.getElementById('win-' + id);
   if (!win) return;
   win.style.display = 'block';
-  bringToFront(id);
+  bringToFront('win-' + id);
   addTaskbarItem(id);
 }
 
@@ -89,30 +74,29 @@ function openWindow(id) {
 }
 
 function closeWindow(id) {
-  var win = document.getElementById('win-' + id);
+  var win = document.getElementById(id);
+  if (!win) win = document.getElementById('win-' + id);
   if (win) {
     win.style.display = 'none';
-    removeTaskbarItem(id);
+    var shortId = id.replace('win-', '');
+    removeTaskbarItem(shortId);
   }
 }
 
 function minimizeWindow(id) {
-  var win = document.getElementById('win-' + id);
-  if (win) {
-    win.style.display = 'none';
-    minimizedWindows[id] = true;
-  }
+  var win = document.getElementById(id);
+  if (!win) win = document.getElementById('win-' + id);
+  if (win) win.style.display = 'none';
 }
 
 function bringToFront(id) {
   zCounter++;
-  var win = document.getElementById('win-' + id);
+  var win = document.getElementById(id);
   if (win) win.style.zIndex = zCounter;
 }
 
 function addTaskbarItem(id) {
-  var existing = document.getElementById('tb-' + id);
-  if (existing) return;
+  if (document.getElementById('tb-' + id)) return;
   var names = {
     'converter': 'File Converter',
     'map': 'Map Converter',
@@ -129,20 +113,19 @@ function addTaskbarItem(id) {
     'download': 'icon-download.png',
     'about': 'icon-about.png'
   };
-  var items = document.querySelector('.taskbar-items');
+  var items = document.getElementById('taskbarItems');
   var item = document.createElement('div');
   item.className = 'taskbar-item';
   item.id = 'tb-' + id;
   item.innerHTML = '<img src="' + (icons[id] || 'icon-converter.png') + '" style="height:18px;" /><span>' + (names[id] || id) + '</span>';
   item.onclick = function() {
     var win = document.getElementById('win-' + id);
-    if (win) {
-      if (win.style.display === 'none') {
-        win.style.display = 'block';
-        bringToFront(id);
-      } else {
-        win.style.display = 'none';
-      }
+    if (!win) return;
+    if (win.style.display === 'none') {
+      win.style.display = 'block';
+      bringToFront('win-' + id);
+    } else {
+      win.style.display = 'none';
     }
   };
   items.appendChild(item);
@@ -157,9 +140,7 @@ function goHome() {
   document.querySelectorAll('.xp-window').forEach(function(w) {
     w.style.display = 'none';
   });
-  document.querySelectorAll('.taskbar-item:not(#tb-home)').forEach(function(t) {
-    t.remove();
-  });
+  document.getElementById('taskbarItems').innerHTML = '';
 }
 
 // ── DRAG WINDOWS ─────────────────────────────────────────────
@@ -193,14 +174,17 @@ function dragEnd() {
   document.removeEventListener('mouseup', dragEnd);
 }
 
-// ── FILE CONVERTER ────────────────────────────────────────────
+// ── DROP ZONES SETUP ─────────────────────────────────────────
 window.addEventListener('load', function() {
+
+  // FILE CONVERTER DROP ZONE
   var dropZone = document.getElementById('dropZone');
   var fileInput = document.getElementById('fileInput');
 
-  if (!dropZone || !fileInput) return;
-
-  dropZone.addEventListener('click', function() { fileInput.click(); });
+  dropZone.addEventListener('click', function(e) {
+    if (e.target.classList.contains('xp-browse')) return;
+    fileInput.click();
+  });
 
   dropZone.addEventListener('dragover', function(e) {
     e.preventDefault();
@@ -224,39 +208,45 @@ window.addEventListener('load', function() {
     }
   });
 
-  // KML drop zone
+  // KML DROP ZONE
   var kmlDrop = document.getElementById('kmlDrop');
   var kmlInput = document.getElementById('kmlInput');
 
-  if (kmlDrop && kmlInput) {
-    kmlInput.addEventListener('change', function() {
-      if (kmlInput.files && kmlInput.files[0]) {
-        document.getElementById('kmlFileName').textContent = '✅ ' + kmlInput.files[0].name;
-        document.getElementById('kmlFields').style.display = 'block';
-      }
-    });
+  kmlDrop.addEventListener('click', function(e) {
+    if (e.target.classList.contains('xp-browse')) return;
+    kmlInput.click();
+  });
 
-    kmlDrop.addEventListener('dragover', function(e) {
-      e.preventDefault();
-      kmlDrop.classList.add('dragover');
-    });
+  kmlDrop.addEventListener('dragover', function(e) {
+    e.preventDefault();
+    kmlDrop.classList.add('dragover');
+  });
 
-    kmlDrop.addEventListener('dragleave', function() {
-      kmlDrop.classList.remove('dragover');
-    });
+  kmlDrop.addEventListener('dragleave', function() {
+    kmlDrop.classList.remove('dragover');
+  });
 
-    kmlDrop.addEventListener('drop', function(e) {
-      e.preventDefault();
-      kmlDrop.classList.remove('dragover');
-      var file = e.dataTransfer.files[0];
-      if (file) {
-        document.getElementById('kmlFileName').textContent = '✅ ' + file.name;
-        document.getElementById('kmlFields').style.display = 'block';
-      }
-    });
-  }
+  kmlDrop.addEventListener('drop', function(e) {
+    e.preventDefault();
+    kmlDrop.classList.remove('dragover');
+    var file = e.dataTransfer.files[0];
+    if (file) {
+      kmlInput.files = e.dataTransfer.files;
+      document.getElementById('kmlFileName').textContent = '✅ ' + file.name;
+      document.getElementById('kmlFields').style.display = 'block';
+    }
+  });
+
+  kmlInput.addEventListener('change', function() {
+    if (kmlInput.files && kmlInput.files[0]) {
+      document.getElementById('kmlFileName').textContent = '✅ ' + kmlInput.files[0].name;
+      document.getElementById('kmlFields').style.display = 'block';
+    }
+  });
+
 });
 
+// ── FILE SELECTED ─────────────────────────────────────────────
 function onFileSelected(file) {
   var name = file.name.toLowerCase();
   var formatSelect = document.getElementById('formatSelect');
@@ -289,16 +279,14 @@ function onFileSelected(file) {
   document.getElementById('convertRow').style.display = 'flex';
 }
 
+// ── CONVERT ──────────────────────────────────────────────────
 function handleConvert() {
   var fileInput = document.getElementById('fileInput');
   var file = fileInput.files[0];
   var format = document.getElementById('formatSelect').value;
-
   if (!file) { toast('Please upload a file first!', 'error'); return; }
   if (!format) { toast('Please select a format!', 'error'); return; }
-
   var name = file.name.toLowerCase();
-
   if (name.endsWith('.mp4') || name.endsWith('.mp3') || name.endsWith('.wav')) {
     convertAudio(file, format);
   } else {
@@ -312,7 +300,6 @@ function convertAudio(file, format) {
   var createFFmpeg = FFmpeg.createFFmpeg;
   var fetchFile = FFmpeg.fetchFile;
   var ffmpeg = createFFmpeg({ log: false });
-
   ffmpeg.load().then(function() {
     var inputName = 'input.' + file.name.split('.').pop();
     var outputName = 'output.' + format;
@@ -338,7 +325,6 @@ function convertDocument(file, format) {
   var formData = new FormData();
   formData.append('file', file);
   formData.append('format', format);
-
   fetch(BACKEND + '/convert', {
     method: 'POST',
     body: formData
@@ -361,16 +347,20 @@ function convertDocument(file, format) {
 
 // ── CSV TO KML ────────────────────────────────────────────────
 function convertToKML() {
-  var file = document.getElementById('kmlInput').files[0];
+  var kmlInput = document.getElementById('kmlInput');
+  var file = kmlInput.files[0];
   var lat = document.getElementById('kmlLat').value.trim();
   var lng = document.getElementById('kmlLng').value.trim();
   var name = document.getElementById('kmlName').value.trim();
   var desc = document.getElementById('kmlDesc').value.trim();
 
-  if (!file) { toast('Please upload a file first!', 'error'); return; }
-  if (!lat || !lng || !name) { toast('Please fill in Latitude, Longitude and Name!', 'error'); return; }
+  if (!file) { toast('Please upload a CSV or XLSX file!', 'error'); return; }
+  if (!lat) { toast('Please enter the Latitude column name!', 'error'); return; }
+  if (!lng) { toast('Please enter the Longitude column name!', 'error'); return; }
+  if (!name) { toast('Please enter the Name column name!', 'error'); return; }
 
   toast('Converting to KML...', 'loading');
+
   var formData = new FormData();
   formData.append('file', file);
   formData.append('lat', lat);
@@ -390,7 +380,7 @@ function convertToKML() {
     return response.blob();
   }).then(function(blob) {
     download(blob, 'output.kml');
-    toast('KML file ready!', 'success');
+    toast('KML file downloaded!', 'success');
   }).catch(function(err) {
     toast('Error: ' + err.message, 'error');
   });

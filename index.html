@@ -18,12 +18,7 @@
       <button class="start-btn" onclick="goHome()">
         <img src="start-btn.png" alt="Start" />
       </button>
-      <div class="taskbar-items">
-        <div class="taskbar-item active" id="tb-home" onclick="goHome()">
-          <img src="logo.png" alt="FileShift" style="height:20px;" />
-          <span>FileShift</span>
-        </div>
-      </div>
+      <div class="taskbar-items" id="taskbarItems"></div>
       <div class="taskbar-clock" id="clock"></div>
     </div>
 
@@ -32,40 +27,31 @@
 
       <!-- DESKTOP ICONS -->
       <div class="desktop-icons">
-
-        <div class="desktop-icon" ondblclick="openTool('converter')">
+        <div class="desktop-icon" onclick="openTool('converter')">
           <img src="icon-converter.png" alt="Converter" />
           <span>File Converter</span>
         </div>
-
-        <div class="desktop-icon" ondblclick="openTool('pdf')">
+        <div class="desktop-icon" onclick="openTool('pdf')">
           <img src="icon-pdf.png" alt="PDF" />
           <span>PDF Tools</span>
         </div>
-
-        <div class="desktop-icon" ondblclick="openTool('map')">
+        <div class="desktop-icon" onclick="openTool('map')">
           <img src="icon-map.png" alt="Map" />
           <span>Map Converter</span>
         </div>
-
-        <div class="desktop-icon" ondblclick="openTool('image')">
+        <div class="desktop-icon" onclick="openTool('image')">
           <img src="icon-image.png" alt="Image" />
           <span>Image Tools</span>
         </div>
-
-        <div class="desktop-icon" ondblclick="openTool('download')">
+        <div class="desktop-icon" onclick="openTool('download')">
           <img src="icon-download.png" alt="Download" />
           <span>Downloader</span>
         </div>
-
-        <div class="desktop-icon" ondblclick="openWindow('about')">
+        <div class="desktop-icon" onclick="openWindow('about')">
           <img src="icon-about.png" alt="About" />
           <span>About</span>
         </div>
-
       </div>
-
-      <!-- WINDOWS -->
 
       <!-- FILE CONVERTER WINDOW -->
       <div class="xp-window" id="win-converter" style="display:none; top:60px; left:120px;">
@@ -81,10 +67,7 @@
           </div>
         </div>
         <div class="xp-menubar">
-          <span>File</span>
-          <span>Edit</span>
-          <span>View</span>
-          <span>Help</span>
+          <span>File</span><span>Edit</span><span>View</span><span>Help</span>
         </div>
         <div class="xp-body">
           <div class="xp-drop-zone" id="dropZone">
@@ -92,7 +75,7 @@
             <img src="icon-converter.png" alt="" style="width:48px; margin-bottom:12px;" />
             <p class="xp-drop-title">Drop your file here</p>
             <p class="xp-drop-sub">or <span class="xp-browse" onclick="document.getElementById('fileInput').click()">browse</span></p>
-            <p class="xp-drop-formats">DOCX · PDF · MP4 · MP3 · WAV</p>
+            <p class="xp-drop-formats" id="converterFileName">DOCX · PDF · MP4 · MP3 · WAV</p>
           </div>
           <div id="convertRow" class="xp-convert-row" style="display:none;">
             <div class="xp-file-pill">
@@ -101,9 +84,7 @@
             </div>
             <span class="xp-arrow">→</span>
             <select id="formatSelect" class="xp-select"></select>
-            <button class="xp-action-btn" onclick="handleConvert()">
-              Convert
-            </button>
+            <button class="xp-action-btn" onclick="handleConvert()">Convert</button>
           </div>
         </div>
       </div>
@@ -122,20 +103,17 @@
           </div>
         </div>
         <div class="xp-menubar">
-          <span>File</span>
-          <span>Edit</span>
-          <span>View</span>
-          <span>Help</span>
+          <span>File</span><span>Edit</span><span>View</span><span>Help</span>
         </div>
         <div class="xp-body">
-          <div class="xp-drop-zone" id="kmlDrop" onclick="document.getElementById('kmlInput').click()">
+          <div class="xp-drop-zone" id="kmlDrop">
             <input type="file" id="kmlInput" style="display:none;" accept=".csv,.xlsx" />
             <img src="icon-map.png" alt="" style="width:48px; margin-bottom:12px;" />
             <p class="xp-drop-title">Drop your CSV or XLSX</p>
-            <p class="xp-drop-sub">or <span class="xp-browse">browse</span></p>
+            <p class="xp-drop-sub">or <span class="xp-browse" onclick="document.getElementById('kmlInput').click()">browse</span></p>
             <p class="xp-drop-formats" id="kmlFileName">CSV · XLSX</p>
           </div>
-          <div id="kmlFields" style="display:none;">
+          <div id="kmlFields" style="display:none; margin-top:16px;">
             <div class="xp-field-grid">
               <div class="xp-field">
                 <label>Latitude column</label>
@@ -154,9 +132,7 @@
                 <input type="text" id="kmlDesc" class="xp-input" placeholder="e.g. description" />
               </div>
             </div>
-            <button class="xp-action-btn" onclick="convertToKML()">
-              Convert to KML
-            </button>
+            <button class="xp-action-btn" onclick="convertToKML()">Convert to KML</button>
           </div>
         </div>
       </div>
@@ -250,16 +226,14 @@
           <img src="about-bg.jpg" alt="About" class="about-img" />
           <div class="about-text">
             <h3>FileShift</h3>
-            <p>A free, fast, and private file toolkit built for everyone.</p>
+            <p>A free, fast and private file toolkit built for everyone.</p>
             <p class="about-credit">Made with ❤️ by <strong>Majed</strong> and <strong>Claude</strong><br/>and 700mg of caffeine ☕</p>
-            <a href="mailto:realspodi@gmail.com" class="xp-action-btn suggest-btn">
-              💡 Send a Suggestion
-            </a>
+            <a href="mailto:realspodi@gmail.com" class="xp-action-btn suggest-btn">💡 Send a Suggestion</a>
           </div>
         </div>
       </div>
 
-      <!-- TOAST / NOTIFICATION -->
+      <!-- XP TOAST -->
       <div id="xpToast" class="xp-toast" style="display:none;">
         <div class="xp-toast-titlebar">
           <span id="xpToastTitle">FileShift</span>
