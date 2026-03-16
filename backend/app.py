@@ -67,6 +67,54 @@ def convert():
 
     else:
         return jsonify({'error': 'Unsupported conversion'}), 400
+@app.route('/csv-to-kml', methods=['POST', 'OPTIONS'])
+def csv_to_kml():
+    import pandas as pd
+    import simplekml
+    import tempfile
 
+    file = request.files['file']
+    lat_col = request.form['lat']
+    lng_col = request.form['lng']
+    name_col = request.form['name']
+    desc_col = request.form.get('desc', '')
+    filename = file.filename.lower()
+
+    try:
+        if filename.endswith('.csv'):
+            df = pd.read_csv(file)
+        elif filename.endswith('.xlsx'):
+            df = pd.read_excel(file)
+        else:
+            return cors(make_response(jsonify({'error': 'Unsupported file'}), 400))
+
+        kml = simplekml.Kml()
+        for _, row in df.iterrows():
+            try:
+                lat = float(row[lat_col])
+                lng = float(row[lng_col])
+                name = str(row[name_col])
+                desc = str(row[desc_col]) if desc_col and desc_col in df.columns else ''
+                pnt = kml.newpoint(name=name)
+                pnt.coords = [(lng, lat)]
+                pnt.description = desc
+            except Exception:
+                continue
+
+        tmp = tempfile.NamedTemporaryFile(delete=False, suffix='.kml')
+        kml.save(tmp.name)
+        with open(tmp.name, 'rb') as f:
+            data = f.read()
+        os.unlink(tmp.name)
+
+        return cors(make_response(send_file(
+            io.BytesIO(data),
+            mimetype='application/vnd.google-earth.kml+xml',
+            as_attachment=True,
+            download_name='output.kml'
+        )))
+
+    except Exception as e:
+        return cors(make_response(jsonify({'error': str(e)}), 500))
 if __name__ == '__main__':
     app.run(debug=True)

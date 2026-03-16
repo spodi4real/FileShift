@@ -4,3 +4,6 @@ gunicorn
 pdf2docx
 python-docx
 reportlab
+simplekml
+pandas
+openpyxl

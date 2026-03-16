@@ -5,134 +5,279 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
     <title>FileShift</title>
     <link rel="stylesheet" href="style.css" />
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Public+Sans:wght@400;600;700&display=swap" rel="stylesheet"/>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
   </head>
   <body>
 
-    <nav class="navbar">
-      <div class="logo">⚡ FileShift</div>
-      <div class="nav-right">
-        <span class="nav-tag">Free • Fast • Private</span>
-      </div>
-    </nav>
+    <!-- TOP PROGRESS BAR -->
+    <div id="progressBar" class="progress-bar"></div>
 
-    <main class="main">
-
-      <!-- HOME -->
-      <div id="home" class="page active">
-        <div class="home-hero">
-          <div class="hero-badge">✦ All your file tools in one place</div>
-          <h1>Your Files.<br/><span class="gradient-text">Your Way.</span></h1>
-          <p>Convert, edit, and transform files — free, fast, and private.</p>
-        </div>
-
-        <div class="tools-grid" id="toolsGrid">
-
-          <div class="tool-card" onclick="openTool('converter')">
-            <div class="tool-icon"><i class="fa-solid fa-rotate"></i></div>
-            <div class="tool-info">
-              <h3>File Converter</h3>
-              <p>DOCX, PDF, MP4, MP3, WAV</p>
-            </div>
-            <i class="fa-solid fa-arrow-right tool-arrow"></i>
-          </div>
-
-          <div class="tool-card coming-soon">
-            <div class="tool-icon"><i class="fa-solid fa-file-pdf"></i></div>
-            <div class="tool-info">
-              <h3>PDF Tools</h3>
-              <p>Merge, split, protect & more</p>
-            </div>
-            <span class="badge">Soon</span>
-          </div>
-
-          <div class="tool-card coming-soon">
-            <div class="tool-icon"><i class="fa-solid fa-wand-magic-sparkles"></i></div>
-            <div class="tool-info">
-              <h3>Remove Background</h3>
-              <p>AI-powered background removal</p>
-            </div>
-            <span class="badge">Soon</span>
-          </div>
-
-          <div class="tool-card coming-soon">
-            <div class="tool-icon"><i class="fa-solid fa-crop-simple"></i></div>
-            <div class="tool-info">
-              <h3>Crop Image</h3>
-              <p>Precise drag-to-crop tool</p>
-            </div>
-            <span class="badge">Soon</span>
-          </div>
-
-          <div class="tool-card coming-soon">
-            <div class="tool-icon"><i class="fa-solid fa-download"></i></div>
-            <div class="tool-info">
-              <h3>Media Downloader</h3>
-              <p>YouTube, TikTok, Instagram</p>
-            </div>
-            <span class="badge">Soon</span>
-          </div>
-
-          <div class="tool-card coming-soon">
-            <div class="tool-icon"><i class="fa-solid fa-map-location-dot"></i></div>
-            <div class="tool-info">
-              <h3>CSV to KML</h3>
-              <p>Convert spreadsheets to maps</p>
-            </div>
-            <span class="badge">Soon</span>
-          </div>
-
+    <!-- TASKBAR -->
+    <div class="taskbar">
+      <button class="start-btn" onclick="goHome()">
+        <img src="start-btn.png" alt="Start" />
+      </button>
+      <div class="taskbar-items">
+        <div class="taskbar-item active" id="tb-home" onclick="goHome()">
+          <img src="logo.png" alt="FileShift" style="height:20px;" />
+          <span>FileShift</span>
         </div>
       </div>
+      <div class="taskbar-clock" id="clock"></div>
+    </div>
 
-      <!-- FILE CONVERTER -->
-      <div id="tool-converter" class="page">
-        <div class="tool-page-header">
-          <button class="back-btn" onclick="goHome()">
-            <i class="fa-solid fa-arrow-left"></i> Back
-          </button>
-          <div class="tool-page-title">
-            <div class="tool-icon-lg"><i class="fa-solid fa-rotate"></i></div>
-            <div>
-              <h2>File Converter</h2>
-              <p>Convert between DOCX, PDF, MP4, MP3 and WAV</p>
-            </div>
-          </div>
+    <!-- DESKTOP -->
+    <div class="desktop" id="desktop">
+
+      <!-- DESKTOP ICONS -->
+      <div class="desktop-icons">
+
+        <div class="desktop-icon" ondblclick="openTool('converter')">
+          <img src="icon-converter.png" alt="Converter" />
+          <span>File Converter</span>
         </div>
 
-        <div class="converter-card">
-          <div class="drop-zone" id="dropZone">
+        <div class="desktop-icon" ondblclick="openTool('pdf')">
+          <img src="icon-pdf.png" alt="PDF" />
+          <span>PDF Tools</span>
+        </div>
+
+        <div class="desktop-icon" ondblclick="openTool('map')">
+          <img src="icon-map.png" alt="Map" />
+          <span>Map Converter</span>
+        </div>
+
+        <div class="desktop-icon" ondblclick="openTool('image')">
+          <img src="icon-image.png" alt="Image" />
+          <span>Image Tools</span>
+        </div>
+
+        <div class="desktop-icon" ondblclick="openTool('download')">
+          <img src="icon-download.png" alt="Download" />
+          <span>Downloader</span>
+        </div>
+
+        <div class="desktop-icon" ondblclick="openWindow('about')">
+          <img src="icon-about.png" alt="About" />
+          <span>About</span>
+        </div>
+
+      </div>
+
+      <!-- WINDOWS -->
+
+      <!-- FILE CONVERTER WINDOW -->
+      <div class="xp-window" id="win-converter" style="display:none; top:60px; left:120px;">
+        <div class="xp-titlebar" onmousedown="dragStart(event, 'win-converter')">
+          <div class="xp-titlebar-left">
+            <img src="icon-converter.png" alt="" class="xp-title-icon" />
+            <span>File Converter</span>
+          </div>
+          <div class="xp-titlebar-btns">
+            <button class="xp-btn-min" onclick="minimizeWindow('win-converter')">─</button>
+            <button class="xp-btn-max">□</button>
+            <button class="xp-btn-close" onclick="closeWindow('win-converter')">✕</button>
+          </div>
+        </div>
+        <div class="xp-menubar">
+          <span>File</span>
+          <span>Edit</span>
+          <span>View</span>
+          <span>Help</span>
+        </div>
+        <div class="xp-body">
+          <div class="xp-drop-zone" id="dropZone">
             <input type="file" id="fileInput" style="display:none;" accept=".docx,.pdf,.mp4,.mp3,.wav" />
-            <div class="drop-content">
-              <div class="drop-icon-wrap">
-                <i class="fa-solid fa-cloud-arrow-up"></i>
-              </div>
-              <p class="drop-title">Drop your file here</p>
-              <p class="drop-sub">or <span class="browse-link">browse files</span></p>
-              <p class="drop-formats" id="fileName">DOCX · PDF · MP4 · MP3 · WAV</p>
-            </div>
+            <img src="icon-converter.png" alt="" style="width:48px; margin-bottom:12px;" />
+            <p class="xp-drop-title">Drop your file here</p>
+            <p class="xp-drop-sub">or <span class="xp-browse" onclick="document.getElementById('fileInput').click()">browse</span></p>
+            <p class="xp-drop-formats">DOCX · PDF · MP4 · MP3 · WAV</p>
           </div>
-
-          <div id="convertRow" class="convert-row" style="display:none;">
-            <div class="convert-row-inner">
-              <div class="file-pill" id="filePill">
-                <i class="fa-solid fa-file"></i>
-                <span id="filePillName"></span>
-              </div>
-              <i class="fa-solid fa-arrow-right convert-arrow"></i>
-              <select id="formatSelect" class="format-select"></select>
-              <button class="btn-convert" onclick="handleConvert()">
-                <i class="fa-solid fa-bolt"></i>
-                Convert
-              </button>
+          <div id="convertRow" class="xp-convert-row" style="display:none;">
+            <div class="xp-file-pill">
+              <img src="icon-converter.png" alt="" style="width:16px;" />
+              <span id="filePillName"></span>
             </div>
+            <span class="xp-arrow">→</span>
+            <select id="formatSelect" class="xp-select"></select>
+            <button class="xp-action-btn" onclick="handleConvert()">
+              Convert
+            </button>
           </div>
         </div>
       </div>
 
-    </main>
+      <!-- MAP CONVERTER WINDOW -->
+      <div class="xp-window" id="win-map" style="display:none; top:80px; left:160px;">
+        <div class="xp-titlebar" onmousedown="dragStart(event, 'win-map')">
+          <div class="xp-titlebar-left">
+            <img src="icon-map.png" alt="" class="xp-title-icon" />
+            <span>Map Converter</span>
+          </div>
+          <div class="xp-titlebar-btns">
+            <button class="xp-btn-min" onclick="minimizeWindow('win-map')">─</button>
+            <button class="xp-btn-max">□</button>
+            <button class="xp-btn-close" onclick="closeWindow('win-map')">✕</button>
+          </div>
+        </div>
+        <div class="xp-menubar">
+          <span>File</span>
+          <span>Edit</span>
+          <span>View</span>
+          <span>Help</span>
+        </div>
+        <div class="xp-body">
+          <div class="xp-drop-zone" id="kmlDrop" onclick="document.getElementById('kmlInput').click()">
+            <input type="file" id="kmlInput" style="display:none;" accept=".csv,.xlsx" />
+            <img src="icon-map.png" alt="" style="width:48px; margin-bottom:12px;" />
+            <p class="xp-drop-title">Drop your CSV or XLSX</p>
+            <p class="xp-drop-sub">or <span class="xp-browse">browse</span></p>
+            <p class="xp-drop-formats" id="kmlFileName">CSV · XLSX</p>
+          </div>
+          <div id="kmlFields" style="display:none;">
+            <div class="xp-field-grid">
+              <div class="xp-field">
+                <label>Latitude column</label>
+                <input type="text" id="kmlLat" class="xp-input" placeholder="e.g. lat" />
+              </div>
+              <div class="xp-field">
+                <label>Longitude column</label>
+                <input type="text" id="kmlLng" class="xp-input" placeholder="e.g. lng" />
+              </div>
+              <div class="xp-field">
+                <label>Name column</label>
+                <input type="text" id="kmlName" class="xp-input" placeholder="e.g. name" />
+              </div>
+              <div class="xp-field">
+                <label>Description (optional)</label>
+                <input type="text" id="kmlDesc" class="xp-input" placeholder="e.g. description" />
+              </div>
+            </div>
+            <button class="xp-action-btn" onclick="convertToKML()">
+              Convert to KML
+            </button>
+          </div>
+        </div>
+      </div>
 
-    <div id="statusToast" class="toast"></div>
+      <!-- PDF TOOLS WINDOW -->
+      <div class="xp-window" id="win-pdf" style="display:none; top:100px; left:140px;">
+        <div class="xp-titlebar" onmousedown="dragStart(event, 'win-pdf')">
+          <div class="xp-titlebar-left">
+            <img src="icon-pdf.png" alt="" class="xp-title-icon" />
+            <span>PDF Tools</span>
+          </div>
+          <div class="xp-titlebar-btns">
+            <button class="xp-btn-min" onclick="minimizeWindow('win-pdf')">─</button>
+            <button class="xp-btn-max">□</button>
+            <button class="xp-btn-close" onclick="closeWindow('win-pdf')">✕</button>
+          </div>
+        </div>
+        <div class="xp-menubar">
+          <span>File</span><span>Edit</span><span>View</span><span>Help</span>
+        </div>
+        <div class="xp-body">
+          <p class="xp-coming-soon">
+            <img src="loading-circle.gif" alt="" style="width:40px;" /><br/><br/>
+            Coming Soon...
+          </p>
+        </div>
+      </div>
+
+      <!-- IMAGE TOOLS WINDOW -->
+      <div class="xp-window" id="win-image" style="display:none; top:100px; left:140px;">
+        <div class="xp-titlebar" onmousedown="dragStart(event, 'win-image')">
+          <div class="xp-titlebar-left">
+            <img src="icon-image.png" alt="" class="xp-title-icon" />
+            <span>Image Tools</span>
+          </div>
+          <div class="xp-titlebar-btns">
+            <button class="xp-btn-min" onclick="minimizeWindow('win-image')">─</button>
+            <button class="xp-btn-max">□</button>
+            <button class="xp-btn-close" onclick="closeWindow('win-image')">✕</button>
+          </div>
+        </div>
+        <div class="xp-menubar">
+          <span>File</span><span>Edit</span><span>View</span><span>Help</span>
+        </div>
+        <div class="xp-body">
+          <p class="xp-coming-soon">
+            <img src="loading-circle.gif" alt="" style="width:40px;" /><br/><br/>
+            Coming Soon...
+          </p>
+        </div>
+      </div>
+
+      <!-- DOWNLOADER WINDOW -->
+      <div class="xp-window" id="win-download" style="display:none; top:100px; left:140px;">
+        <div class="xp-titlebar" onmousedown="dragStart(event, 'win-download')">
+          <div class="xp-titlebar-left">
+            <img src="icon-download.png" alt="" class="xp-title-icon" />
+            <span>Media Downloader</span>
+          </div>
+          <div class="xp-titlebar-btns">
+            <button class="xp-btn-min" onclick="minimizeWindow('win-download')">─</button>
+            <button class="xp-btn-max">□</button>
+            <button class="xp-btn-close" onclick="closeWindow('win-download')">✕</button>
+          </div>
+        </div>
+        <div class="xp-menubar">
+          <span>File</span><span>Edit</span><span>View</span><span>Help</span>
+        </div>
+        <div class="xp-body">
+          <p class="xp-coming-soon">
+            <img src="loading-circle.gif" alt="" style="width:40px;" /><br/><br/>
+            Coming Soon...
+          </p>
+        </div>
+      </div>
+
+      <!-- ABOUT WINDOW -->
+      <div class="xp-window" id="win-about" style="display:none; top:80px; left:200px;">
+        <div class="xp-titlebar" onmousedown="dragStart(event, 'win-about')">
+          <div class="xp-titlebar-left">
+            <img src="icon-about.png" alt="" class="xp-title-icon" />
+            <span>About FileShift</span>
+          </div>
+          <div class="xp-titlebar-btns">
+            <button class="xp-btn-min" onclick="minimizeWindow('win-about')">─</button>
+            <button class="xp-btn-max">□</button>
+            <button class="xp-btn-close" onclick="closeWindow('win-about')">✕</button>
+          </div>
+        </div>
+        <div class="xp-body about-body">
+          <img src="about-bg.jpg" alt="About" class="about-img" />
+          <div class="about-text">
+            <h3>FileShift</h3>
+            <p>A free, fast, and private file toolkit built for everyone.</p>
+            <p class="about-credit">Made with ❤️ by <strong>Majed</strong> and <strong>Claude</strong><br/>and 700mg of caffeine ☕</p>
+            <a href="mailto:realspodi@gmail.com" class="xp-action-btn suggest-btn">
+              💡 Send a Suggestion
+            </a>
+          </div>
+        </div>
+      </div>
+
+      <!-- TOAST / NOTIFICATION -->
+      <div id="xpToast" class="xp-toast" style="display:none;">
+        <div class="xp-toast-titlebar">
+          <span id="xpToastTitle">FileShift</span>
+          <button onclick="document.getElementById('xpToast').style.display='none'">✕</button>
+        </div>
+        <div class="xp-toast-body">
+          <img id="xpToastFace" src="face-success.png" alt="" />
+          <p id="xpToastMsg"></p>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- FOOTER -->
+    <div class="xp-footer">
+      Made with ❤️ by Majed &amp; Claude · 700mg of caffeine ·
+      <a href="mailto:realspodi@gmail.com">💡 Suggest a feature</a>
+    </div>
 
     <script src="https://unpkg.com/@ffmpeg/ffmpeg@0.11.6/dist/ffmpeg.min.js"></script>
     <script src="script.js"></script>
